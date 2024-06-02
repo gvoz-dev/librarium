@@ -1,0 +1,2 @@
+# librarium
+Backend Scala App
