@@ -6,19 +6,13 @@ import zio.*
 /** Репозиторий пользовательских комментариев к книгам. */
 trait CommentRepository:
 
-  /** Добавить комментарий пользователя к книге.
+  /** Получить комментарий по ID.
     *
-    * @param comment
-    *   комментарий
-    * @param userId
-    *   уникальный идентификатор пользователя
-    * @param bookId
-    *   уникальный идентификатор книги
+    * @param id
+    *   уникальный идентификатор комментария
     */
-  def create(
-      comment: Comment,
-      userId: String,
-      bookId: String
+  def findById(
+      id: String
   ): Task[Option[Comment]]
 
   /** Получить все комментарии пользователя.
@@ -26,14 +20,18 @@ trait CommentRepository:
     * @param userId
     *   уникальный идентификатор пользователя
     */
-  def findByUser(userId: String): Task[List[Comment]]
+  def findByUser(
+      userId: String
+  ): Task[List[Comment]]
 
   /** Получить все комментарии к книге.
     *
     * @param bookId
     *   уникальный идентификатор книги
     */
-  def findByBook(bookId: String): Task[List[Comment]]
+  def findByBook(
+      bookId: String
+  ): Task[List[Comment]]
 
   /** Получить все комментарии пользователя к книге.
     *
@@ -47,25 +45,7 @@ trait CommentRepository:
       bookId: String
   ): Task[List[Comment]]
 
-  /** Изменить комментарий.
-    *
-    * @param comment
-    *   комментарий
-    */
-  def update(comment: Comment): Task[Option[Comment]]
-
-  /** Удалить комментарий.
-    *
-    * @param id
-    *   уникальный идентификатор комментария
-    */
-  def delete(id: String): Task[Unit]
-
-end CommentRepository
-
-object CommentRepository:
-
-  /** Сервис добавления комментария пользователя к книге.
+  /** Добавить комментарий пользователя к книге.
     *
     * @param comment
     *   комментарий
@@ -78,58 +58,24 @@ object CommentRepository:
       comment: Comment,
       userId: String,
       bookId: String
-  ): ZIO[CommentRepository, Throwable, Option[Comment]] =
-    ZIO.serviceWithZIO[CommentRepository](_.create(comment, userId, bookId))
+  ): Task[Comment]
 
-  /** Сервис получения всех комментариев пользователя.
-    *
-    * @param userId
-    *   уникальный идентификатор пользователя
-    */
-  def findByUser(
-      userId: String
-  ): ZIO[CommentRepository, Throwable, List[Comment]] =
-    ZIO.serviceWithZIO[CommentRepository](_.findByUser(userId))
-
-  /** Сервис получения всех комментариев к книге.
-    *
-    * @param bookId
-    *   уникальный идентификатор книги
-    */
-  def findByBook(
-      bookId: String
-  ): ZIO[CommentRepository, Throwable, List[Comment]] =
-    ZIO.serviceWithZIO[CommentRepository](_.findByBook(bookId))
-
-  /** Сервис получения всех комментариев пользователя к книге.
-    *
-    * @param userId
-    *   уникальный идентификатор пользователя
-    * @param bookId
-    *   уникальный идентификатор книги
-    */
-  def findByUserAndBook(
-      userId: String,
-      bookId: String
-  ): ZIO[CommentRepository, Throwable, List[Comment]] =
-    ZIO.serviceWithZIO[CommentRepository](_.findByUserAndBook(userId, bookId))
-
-  /** Сервис изменения комментария.
+  /** Изменить комментарий.
     *
     * @param comment
     *   комментарий
     */
   def update(
       comment: Comment
-  ): ZIO[CommentRepository, Throwable, Option[Comment]] =
-    ZIO.serviceWithZIO[CommentRepository](_.update(comment))
+  ): Task[Comment]
 
-  /** Сервис удаления комментария.
+  /** Удалить комментарий.
     *
     * @param id
     *   уникальный идентификатор комментария
     */
-  def delete(id: String): ZIO[CommentRepository, Throwable, Unit] =
-    ZIO.serviceWithZIO[CommentRepository](_.delete(id))
+  def delete(
+      id: String
+  ): Task[Unit]
 
 end CommentRepository

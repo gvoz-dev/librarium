@@ -3,6 +3,8 @@ package itcube.rest.api
 import itcube.entities.{Book, Comment}
 import itcube.repositories.book.BookRepository
 import itcube.repositories.comment.CommentRepository
+import itcube.services.book.BookService
+import itcube.services.comment.CommentService
 import zio.*
 import zio.http.*
 import zio.schema.codec.JsonCodec.schemaBasedBinaryCodec
@@ -16,7 +18,7 @@ object BookRoutes {
       Method.GET / "books" -> handler { (request: Request) =>
         {
           if (request.url.queryParams.isEmpty) {
-            BookRepository.all
+            BookService.all
               .mapBoth(
                 error => Response.internalServerError(error.getMessage),
                 books => Response(body = Body.from(books))
@@ -25,7 +27,7 @@ object BookRoutes {
             val titles: Chunk[String] = request.url.queryParams("title")
             if (titles.nonEmpty) {
               val title = titles(0)
-              BookRepository
+              BookService
                 .findByTitle(title)
                 .mapBoth(
                   error => Response.internalServerError(error.getMessage),
@@ -47,7 +49,7 @@ object BookRoutes {
       Method.GET / "books" / string("id") -> handler {
         (id: String, _: Request) =>
           {
-            BookRepository
+            BookService
               .findById(id)
               .mapBoth(
                 error => Response.internalServerError(error.getMessage),
@@ -65,16 +67,11 @@ object BookRoutes {
       Method.POST / "books" -> handler { (request: Request) =>
         for {
           book <- request.body.to[Book].orElseFail(Response.badRequest)
-          response <- BookRepository
+          response <- BookService
             .create(book)
             .mapBoth(
               error => Response.internalServerError(error.getMessage),
-              {
-                case Some(book) =>
-                  Response(body = Body.from(book))
-                case None =>
-                  Response.notFound(s"Book not created!")
-              }
+              success => Response(body = Body.from(success))
             )
         } yield response
       },
@@ -83,16 +80,11 @@ object BookRoutes {
       Method.PATCH / "books" -> handler { (request: Request) =>
         for {
           book <- request.body.to[Book].orElseFail(Response.badRequest)
-          response <- BookRepository
+          response <- BookService
             .update(book)
             .mapBoth(
               error => Response.internalServerError(error.getMessage),
-              {
-                case Some(book) =>
-                  Response(body = Body.from(book))
-                case None =>
-                  Response.notFound(s"Book ${book.id} not updated!")
-              }
+              success => Response(body = Body.from(success))
             )
         } yield response
       },
@@ -101,7 +93,7 @@ object BookRoutes {
       Method.DELETE / "books" / string("id") -> handler {
         (id: String, _: Request) =>
           {
-            BookRepository
+            BookService
               .delete(id)
               .mapBoth(
                 error => Response.internalServerError(error.getMessage),
@@ -117,7 +109,7 @@ object BookRoutes {
         {
           for {
             comment <- request.body.to[Comment].orElseFail(Response.badRequest)
-            response <- CommentRepository
+            response <- CommentService
               .create(comment, userId, bookId)
               .mapBoth(
                 error => Response.internalServerError(error.getMessage),
@@ -131,7 +123,7 @@ object BookRoutes {
       Method.GET / "comments" / string("bookId") / string("userId") -> handler {
         (bookId: String, userId: String, request: Request) =>
           {
-            CommentRepository
+            CommentService
               .findByUserAndBook(userId, bookId)
               .mapBoth(
                 error => Response.internalServerError(error.getMessage),

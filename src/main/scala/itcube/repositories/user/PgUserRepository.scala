@@ -70,11 +70,10 @@ case class PgUserRepository(ds: DataSource) extends UserRepository:
       result <- run {
         quote {
           query[Users]
-            .filter(_.id == lift(uuid))
+            .filter(u => u.id == lift(uuid))
             .map(toUser)
         }
-      }.map(_.headOption)
-        .provide(dsLayer)
+      }.map(_.headOption).provide(dsLayer)
     } yield result
   end findById
 
@@ -87,11 +86,10 @@ case class PgUserRepository(ds: DataSource) extends UserRepository:
     run {
       quote {
         query[Users]
-          .filter(_.email == lift(email))
+          .filter(u => u.email == lift(email))
           .map(toUser)
       }
-    }.map(_.headOption)
-      .provide(dsLayer)
+    }.map(_.headOption).provide(dsLayer)
   end findByEmail
 
   /** Получить пользователя по имени.
@@ -103,11 +101,10 @@ case class PgUserRepository(ds: DataSource) extends UserRepository:
     run {
       quote {
         query[Users]
-          .filter(_.name == lift(name))
+          .filter(u => u.name == lift(name))
           .map(toUser)
       }
-    }.map(_.headOption)
-      .provide(dsLayer)
+    }.map(_.headOption).provide(dsLayer)
   end findByName
 
   /** Создать пользователя.
@@ -115,7 +112,7 @@ case class PgUserRepository(ds: DataSource) extends UserRepository:
     * @param user
     *   пользователь
     */
-  override def create(user: User): Task[Option[User]] =
+  override def create(user: User): Task[User] =
     for {
       id <- Random.nextUUID
       result <- run {
@@ -124,8 +121,7 @@ case class PgUserRepository(ds: DataSource) extends UserRepository:
             .insertValue(toUsersRow(id, user))
             .returning(toUser)
         }
-      }.option
-        .provide(dsLayer)
+      }.provide(dsLayer)
     } yield result
   end create
 
@@ -134,18 +130,17 @@ case class PgUserRepository(ds: DataSource) extends UserRepository:
     * @param user
     *   пользователь
     */
-  override def update(user: User): Task[Option[User]] =
+  override def update(user: User): Task[User] =
     for {
       id <- ZIO.getOrFail(user.id)
       result <- run {
         quote {
           query[Users]
-            .filter(_.id == lift(id))
+            .filter(u => u.id == lift(id))
             .updateValue(toUsersRow(id, user))
             .returning(toUser)
         }
-      }.option
-        .provide(dsLayer)
+      }.provide(dsLayer)
     } yield result
   end update
 
@@ -162,14 +157,14 @@ case class PgUserRepository(ds: DataSource) extends UserRepository:
           _ <- run {
             quote {
               query[UsersBooks]
-                .filter(_.userId == lift(uuid))
+                .filter(ub => ub.userId == lift(uuid))
                 .delete
             }
           }
           _ <- run {
             quote {
               query[Users]
-                .filter(_.id == lift(uuid))
+                .filter(u => u.id == lift(uuid))
                 .delete
             }
           }

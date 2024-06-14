@@ -1,11 +1,12 @@
-package itcube.repositories.userbook
+package itcube.services.userbook
 
-import zio.*
+import itcube.repositories.userbook.UserBookRepository
+import zio.ZIO
 
 import java.util.UUID
 
-/** Репозиторий отношений "Пользователь-Книга". */
-trait UserBookRepository:
+/** Сервис отношений "Пользователь-Книга". */
+object UserBookService:
 
   /** Получить ID отношения "Пользователь-Книга".
     *
@@ -17,7 +18,8 @@ trait UserBookRepository:
   def findUserBook(
       userId: String,
       bookId: String
-  ): Task[Option[UUID]]
+  ): ZIO[UserBookRepository, Throwable, Option[UUID]] =
+    ZIO.serviceWithZIO[UserBookRepository](_.findUserBook(userId, bookId))
 
   /** Получить ID всех книг в библиотеке пользователя.
     *
@@ -26,7 +28,8 @@ trait UserBookRepository:
     */
   def libraryBooks(
       userId: String
-  ): Task[List[UUID]]
+  ): ZIO[UserBookRepository, Throwable, List[UUID]] =
+    ZIO.serviceWithZIO[UserBookRepository](_.libraryBooks(userId))
 
   /** Добавить книгу в библиотеку пользователя.
     *
@@ -38,7 +41,17 @@ trait UserBookRepository:
   def addToLibrary(
       userId: String,
       bookId: String
-  ): Task[Unit]
+  ): ZIO[UserBookRepository, Throwable, Unit] =
+    for {
+      result <- ZIO
+        .serviceWithZIO[UserBookRepository](_.addToLibrary(userId, bookId))
+        .onError(e =>
+          ZIO.logError(
+            s"Book `$bookId` not added to lib `$userId`:\n${e.prettyPrint}"
+          )
+        )
+      _ <- ZIO.logInfo(s"Book `$bookId` added to lib `$userId`")
+    } yield result
 
   /** Удалить книгу из библиотеки пользователя.
     *
@@ -50,7 +63,17 @@ trait UserBookRepository:
   def deleteFromLibrary(
       userId: String,
       bookId: String
-  ): Task[Unit]
+  ): ZIO[UserBookRepository, Throwable, Unit] =
+    for {
+      _ <- ZIO
+        .serviceWithZIO[UserBookRepository](_.deleteFromLibrary(userId, bookId))
+        .onError(e =>
+          ZIO.logError(
+            s"Book `$bookId` not deleted from lib `$userId`:\n${e.prettyPrint}"
+          )
+        )
+      _ <- ZIO.logInfo(s"Book `$bookId` deleted from lib `$userId`")
+    } yield ()
 
   /** Получить прогресс прочитанного.
     *
@@ -62,7 +85,8 @@ trait UserBookRepository:
   def getProgress(
       userId: String,
       bookId: String
-  ): Task[Option[Float]]
+  ): ZIO[UserBookRepository, Throwable, Option[Float]] =
+    ZIO.serviceWithZIO[UserBookRepository](_.getProgress(userId, bookId))
 
   /** Установить прогресс прочитанного.
     *
@@ -77,7 +101,19 @@ trait UserBookRepository:
       progress: Float,
       userId: String,
       bookId: String
-  ): Task[Unit]
+  ): ZIO[UserBookRepository, Throwable, Unit] =
+    for {
+      result <- ZIO
+        .serviceWithZIO[UserBookRepository](
+          _.setProgress(progress, userId, bookId)
+        )
+        .onError(e =>
+          ZIO.logError(
+            s"Progress not set (`$userId`, `$bookId`):\n${e.prettyPrint}"
+          )
+        )
+      _ <- ZIO.logInfo(s"Progress $progress set (`$userId`, `$bookId`)")
+    } yield result
 
   /** Получить среднее значение рейтинга книги.
     *
@@ -86,7 +122,8 @@ trait UserBookRepository:
     */
   def avgRating(
       bookId: String
-  ): Task[Option[Float]]
+  ): ZIO[UserBookRepository, Throwable, Option[Float]] =
+    ZIO.serviceWithZIO[UserBookRepository](_.avgRating(bookId))
 
   /** Получить пользовательский рейтинг книги.
     *
@@ -98,7 +135,8 @@ trait UserBookRepository:
   def getRating(
       userId: String,
       bookId: String
-  ): Task[Option[Int]]
+  ): ZIO[UserBookRepository, Throwable, Option[Int]] =
+    ZIO.serviceWithZIO[UserBookRepository](_.getRating(userId, bookId))
 
   /** Установить пользовательский рейтинг книги.
     *
@@ -113,6 +151,18 @@ trait UserBookRepository:
       rating: Int,
       userId: String,
       bookId: String
-  ): Task[Unit]
+  ): ZIO[UserBookRepository, Throwable, Unit] =
+    for {
+      result <- ZIO
+        .serviceWithZIO[UserBookRepository](
+          _.setRating(rating, userId, bookId)
+        )
+        .onError(e =>
+          ZIO.logError(
+            s"Rating not set (`$userId`, `$bookId`):\n${e.prettyPrint}"
+          )
+        )
+      _ <- ZIO.logInfo(s"Rating $rating set (`$userId`, `$bookId`)")
+    } yield result
 
-end UserBookRepository
+end UserBookService

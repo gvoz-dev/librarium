@@ -31,6 +31,92 @@ case class PgCommentRepository(ds: DataSource) extends CommentRepository:
         Some(row.date)
       )
 
+  /** Получить комментарий по ID.
+    *
+    * @param id
+    *   уникальный идентификатор комментария
+    */
+  override def findById(id: String): Task[Option[Comment]] =
+    for {
+      uuid <- ZIO.fromTry(Try(UUID.fromString(id)))
+      result <- run {
+        quote {
+          query[Comments]
+            .filter(c => c.id == lift(uuid))
+            .map(toComment)
+        }
+      }.map(_.headOption).provide(dsLayer)
+    } yield result
+  end findById
+
+  /** Получить все комментарии пользователя.
+    *
+    * @param userId
+    *   уникальный идентификатор пользователя
+    */
+  override def findByUser(userId: String): Task[List[Comment]] =
+    for {
+      userUuid <- ZIO.fromTry(Try(UUID.fromString(userId)))
+      result <- run {
+        quote {
+          for {
+            usersBooks <- query[UsersBooks]
+              .filter(ub => ub.userId == lift(userUuid))
+            comments <- query[Comments]
+              .join(c => c.userBookId == usersBooks.id)
+          } yield comments
+        }.map(toComment)
+      }.provide(dsLayer)
+    } yield result
+  end findByUser
+
+  /** Получить все комментарии к книге.
+    *
+    * @param bookId
+    *   уникальный идентификатор книги
+    */
+  def findByBook(bookId: String): Task[List[Comment]] =
+    for {
+      bookUuid <- ZIO.fromTry(Try(UUID.fromString(bookId)))
+      result <- run {
+        quote {
+          for {
+            usersBooks <- query[UsersBooks]
+              .filter(ub => ub.bookId == lift(bookUuid))
+            comments <- query[Comments]
+              .join(c => c.userBookId == usersBooks.id)
+          } yield comments
+        }.map(toComment)
+      }.provide(dsLayer)
+    } yield result
+  end findByBook
+
+  /** Получить все комментарии пользователя к книге.
+    *
+    * @param userId
+    *   уникальный идентификатор пользователя
+    * @param bookId
+    *   уникальный идентификатор книги
+    */
+  def findByUserAndBook(userId: String, bookId: String): Task[List[Comment]] =
+    for {
+      userUuid <- ZIO.fromTry(Try(UUID.fromString(userId)))
+      bookUuid <- ZIO.fromTry(Try(UUID.fromString(bookId)))
+      result <- run {
+        quote {
+          for {
+            usersBooks <- query[UsersBooks]
+              .filter(ub =>
+                ub.userId == lift(userUuid) && ub.bookId == lift(bookUuid)
+              )
+            comments <- query[Comments]
+              .join(c => c.userBookId == usersBooks.id)
+          } yield comments
+        }.map(toComment)
+      }.provide(dsLayer)
+    } yield result
+  end findByUserAndBook
+
   /** Добавить комментарий пользователя к книге.
     *
     * @param comment
@@ -44,7 +130,7 @@ case class PgCommentRepository(ds: DataSource) extends CommentRepository:
       comment: Comment,
       userId: String,
       bookId: String
-  ): Task[Option[Comment]] =
+  ): Task[Comment] =
     transaction {
       for {
         userUuid <- ZIO.fromTry(Try(UUID.fromString(userId)))
@@ -55,8 +141,7 @@ case class PgCommentRepository(ds: DataSource) extends CommentRepository:
         }
         comment <- createComment(comment, userBookUuid)
       } yield comment
-    }.option
-      .provide(dsLayer)
+    }.provide(dsLayer)
   end create
 
   /** Получить запись отношения "Пользователь-Книга". Если запись в таблице
@@ -74,13 +159,12 @@ case class PgCommentRepository(ds: DataSource) extends CommentRepository:
           .filter(ub => ub.userId == lift(userId) && ub.bookId == lift(bookId))
           .map(ub => ub.id)
       }
-    }.map(_.headOption)
-      .provide(dsLayer)
+    }.map(_.headOption).provide(dsLayer)
   end findUserBook
 
   /** Создать запись отношения "Пользователь-Книга" и вернуть её ID. При
-    * создании отношения свойство inLibrary = false. Т.е. книга не добавляется в
-    * библиотеку пользователя при комментировании.
+    * создании отношения свойство inLibrary = false. Т.е. книга по умолчанию не
+    * добавляется в библиотеку пользователя при комментировании.
     *
     * @param userId
     *   уникальный идентификатор пользователя
@@ -134,89 +218,25 @@ case class PgCommentRepository(ds: DataSource) extends CommentRepository:
     } yield result
   end createComment
 
-  /** Получить все комментарии пользователя.
-    *
-    * @param userId
-    *   уникальный идентификатор пользователя
-    */
-  override def findByUser(userId: String): Task[List[Comment]] =
-    for {
-      userUuid <- ZIO.fromTry(Try(UUID.fromString(userId)))
-      result <- run {
-        quote {
-          for {
-            usersBooks <- query[UsersBooks].filter(_.userId == lift(userUuid))
-            comments <- query[Comments].join(_.userBookId == usersBooks.id)
-          } yield comments
-        }.map(toComment)
-      }.provide(dsLayer)
-    } yield result
-  end findByUser
-
-  /** Получить все комментарии к книге.
-    *
-    * @param bookId
-    *   уникальный идентификатор книги
-    */
-  def findByBook(bookId: String): Task[List[Comment]] =
-    for {
-      bookUuid <- ZIO.fromTry(Try(UUID.fromString(bookId)))
-      result <- run {
-        quote {
-          for {
-            usersBooks <- query[UsersBooks].filter(_.bookId == lift(bookUuid))
-            comments <- query[Comments].join(_.userBookId == usersBooks.id)
-          } yield comments
-        }.map(toComment)
-      }.provide(dsLayer)
-    } yield result
-  end findByBook
-
-  /** Получить все комментарии пользователя к книге.
-    *
-    * @param userId
-    *   уникальный идентификатор пользователя
-    * @param bookId
-    *   уникальный идентификатор книги
-    */
-  def findByUserAndBook(userId: String, bookId: String): Task[List[Comment]] =
-    for {
-      userUuid <- ZIO.fromTry(Try(UUID.fromString(userId)))
-      bookUuid <- ZIO.fromTry(Try(UUID.fromString(bookId)))
-      result <- run {
-        quote {
-          for {
-            usersBooks <- query[UsersBooks]
-              .filter(ub =>
-                ub.userId == lift(userUuid) && ub.bookId == lift(bookUuid)
-              )
-            comments <- query[Comments].join(_.userBookId == usersBooks.id)
-          } yield comments
-        }.map(toComment)
-      }.provide(dsLayer)
-    } yield result
-  end findByUserAndBook
-
   /** Изменить комментарий.
     *
     * @param comment
     *   комментарий
     */
-  def update(comment: Comment): Task[Option[Comment]] =
+  def update(comment: Comment): Task[Comment] =
     for {
       id <- ZIO.getOrFail(comment.id)
       result <- run {
         quote {
           query[Comments]
-            .filter(_.id == lift(id))
+            .filter(c => c.id == lift(id))
             .update(
-              _.text -> lift(comment.text),
-              _.isPrivate -> lift(comment.isPrivate)
+              c => c.text -> lift(comment.text),
+              c => c.isPrivate -> lift(comment.isPrivate)
             )
             .returning(toComment)
         }
-      }.option
-        .provide(dsLayer)
+      }.provide(dsLayer)
     } yield result
   end update
 
@@ -231,7 +251,7 @@ case class PgCommentRepository(ds: DataSource) extends CommentRepository:
       _ <- run {
         quote {
           query[Comments]
-            .filter(_.id == lift(uuid))
+            .filter(c => c.id == lift(uuid))
             .delete
         }
       }.provide(dsLayer)
@@ -244,8 +264,6 @@ object PgCommentRepository:
 
   /** Слой репозитория комментариев. */
   val live: ZLayer[Any, Throwable, PgCommentRepository] =
-    PostgresDataSource.live >>> ZLayer.fromFunction(ds =>
-      PgCommentRepository(ds)
-    )
+    PostgresDataSource.live >>> ZLayer.fromFunction(PgCommentRepository(_))
 
 end PgCommentRepository

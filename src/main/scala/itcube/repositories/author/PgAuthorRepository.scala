@@ -66,11 +66,10 @@ case class PgAuthorRepository(ds: DataSource) extends AuthorRepository:
       result <- run {
         quote {
           query[Authors]
-            .filter(_.id == lift(uuid))
+            .filter(a => a.id == lift(uuid))
             .map(toAuthor)
         }
-      }.map(_.headOption)
-        .provide(dsLayer)
+      }.map(_.headOption).provide(dsLayer)
     } yield result
   end findById
 
@@ -83,11 +82,10 @@ case class PgAuthorRepository(ds: DataSource) extends AuthorRepository:
     run {
       quote {
         query[Authors]
-          .filter(_.name == lift(name))
+          .filter(a => a.name == lift(name))
           .map(toAuthor)
       }
-    }.map(_.headOption)
-      .provide(dsLayer)
+    }.map(_.headOption).provide(dsLayer)
   end findByName
 
   /** Создать автора.
@@ -95,7 +93,7 @@ case class PgAuthorRepository(ds: DataSource) extends AuthorRepository:
     * @param author
     *   автор
     */
-  override def create(author: Author): Task[Option[Author]] =
+  override def create(author: Author): Task[Author] =
     for {
       id <- Random.nextUUID
       result <- run {
@@ -104,8 +102,7 @@ case class PgAuthorRepository(ds: DataSource) extends AuthorRepository:
             .insertValue(toAuthorsRow(id, author))
             .returning(toAuthor)
         }
-      }.option
-        .provide(dsLayer)
+      }.provide(dsLayer)
     } yield result
   end create
 
@@ -114,18 +111,17 @@ case class PgAuthorRepository(ds: DataSource) extends AuthorRepository:
     * @param author
     *   автор
     */
-  override def update(author: Author): Task[Option[Author]] =
+  override def update(author: Author): Task[Author] =
     for {
       id <- ZIO.getOrFail(author.id)
       result <- run {
         quote {
           query[Authors]
-            .filter(_.id == lift(id))
+            .filter(a => a.id == lift(id))
             .updateValue(toAuthorsRow(id, author))
             .returning(toAuthor)
         }
-      }.option
-        .provide(dsLayer)
+      }.provide(dsLayer)
     } yield result
   end update
 
@@ -142,14 +138,14 @@ case class PgAuthorRepository(ds: DataSource) extends AuthorRepository:
           _ <- run {
             quote {
               query[BooksAuthors]
-                .filter(_.authorId == lift(uuid))
+                .filter(ba => ba.authorId == lift(uuid))
                 .delete
             }
           }
           _ <- run {
             quote {
               query[Authors]
-                .filter(_.id == lift(uuid))
+                .filter(a => a.id == lift(uuid))
                 .delete
             }
           }
@@ -164,8 +160,6 @@ object PgAuthorRepository:
 
   /** Слой репозитория авторов. */
   val live: ZLayer[Any, Throwable, PgAuthorRepository] =
-    PostgresDataSource.live >>> ZLayer.fromFunction(ds =>
-      PgAuthorRepository(ds)
-    )
+    PostgresDataSource.live >>> ZLayer.fromFunction(PgAuthorRepository(_))
 
 end PgAuthorRepository

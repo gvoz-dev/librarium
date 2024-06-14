@@ -2,6 +2,7 @@ package itcube.rest.api
 
 import itcube.entities.Publisher
 import itcube.repositories.publisher.PublisherRepository
+import itcube.services.publisher.PublisherService
 import zio.*
 import zio.http.*
 import zio.schema.codec.JsonCodec.schemaBasedBinaryCodec
@@ -15,7 +16,7 @@ object PublisherRoutes {
       Method.GET / "publishers" -> handler { (request: Request) =>
         {
           if (request.url.queryParams.isEmpty) {
-            PublisherRepository.all
+            PublisherService.all
               .mapBoth(
                 error => Response.internalServerError(error.getMessage),
                 publishers => Response(body = Body.from(publishers))
@@ -24,7 +25,7 @@ object PublisherRoutes {
             val names: Chunk[String] = request.url.queryParams("name")
             if (names.nonEmpty) {
               val name = names(0)
-              PublisherRepository
+              PublisherService
                 .findByName(name)
                 .mapBoth(
                   error => Response.internalServerError(error.getMessage),
@@ -46,7 +47,7 @@ object PublisherRoutes {
       Method.GET / "publishers" / string("id") -> handler {
         (id: String, _: Request) =>
           {
-            PublisherRepository
+            PublisherService
               .findById(id)
               .mapBoth(
                 error => Response.internalServerError(error.getMessage),
@@ -66,16 +67,11 @@ object PublisherRoutes {
           publisher <- request.body
             .to[Publisher]
             .orElseFail(Response.badRequest)
-          response <- PublisherRepository
+          response <- PublisherService
             .create(publisher)
             .mapBoth(
               error => Response.internalServerError(error.getMessage),
-              {
-                case Some(publisher) =>
-                  Response(body = Body.from(publisher))
-                case None =>
-                  Response.notFound(s"Publisher not created!")
-              }
+              success => Response(body = Body.from(success))
             )
         } yield response
       },
@@ -86,16 +82,11 @@ object PublisherRoutes {
           publisher <- request.body
             .to[Publisher]
             .orElseFail(Response.badRequest)
-          response <- PublisherRepository
+          response <- PublisherService
             .update(publisher)
             .mapBoth(
               error => Response.internalServerError(error.getMessage),
-              {
-                case Some(publisher) =>
-                  Response(body = Body.from(publisher))
-                case None =>
-                  Response.notFound(s"Publisher ${publisher.id} not updated!")
-              }
+              success => Response(body = Body.from(success))
             )
         } yield response
       },
@@ -104,7 +95,7 @@ object PublisherRoutes {
       Method.DELETE / "publishers" / string("id") -> handler {
         (id: String, _: Request) =>
           {
-            PublisherRepository
+            PublisherService
               .delete(id)
               .mapBoth(
                 error => Response.internalServerError(error.getMessage),

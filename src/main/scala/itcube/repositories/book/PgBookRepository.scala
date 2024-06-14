@@ -77,13 +77,12 @@ case class PgBookRepository(ds: DataSource) extends BookRepository:
       quote {
         for {
           books <- query[Books]
-          publishers <- query[Publishers].leftJoin(p =>
-            books.publisherId.contains(p.id)
-          )
-          booksAuthors <- query[BooksAuthors].leftJoin(_.bookId == books.id)
-          authors <- query[Authors].leftJoin(a =>
-            booksAuthors.exists(_.authorId == a.id)
-          )
+          publishers <- query[Publishers]
+            .leftJoin(p => books.publisherId.contains(p.id))
+          booksAuthors <- query[BooksAuthors]
+            .leftJoin(ba => ba.bookId == books.id)
+          authors <- query[Authors]
+            .leftJoin(a => booksAuthors.exists(ba => ba.authorId == a.id))
         } yield (books, publishers, authors)
       }.map(toBook)
     }.provide(dsLayer)
@@ -100,20 +99,17 @@ case class PgBookRepository(ds: DataSource) extends BookRepository:
       result <- run {
         quote {
           for {
-            books <- query[Books].filter(_.id == lift(uuid))
-            publishers <- query[Publishers].leftJoin(p =>
-              books.publisherId.contains(p.id)
-            )
-            booksAuthors <- query[BooksAuthors].leftJoin(ba =>
-              books.id == ba.bookId
-            )
-            authors <- query[Authors].leftJoin(a =>
-              booksAuthors.exists(_.authorId == a.id)
-            )
+            books <- query[Books]
+              .filter(b => b.id == lift(uuid))
+            publishers <- query[Publishers]
+              .leftJoin(p => books.publisherId.contains(p.id))
+            booksAuthors <- query[BooksAuthors]
+              .leftJoin(ba => books.id == ba.bookId)
+            authors <- query[Authors]
+              .leftJoin(a => booksAuthors.exists(ba => ba.authorId == a.id))
           } yield (books, publishers, authors)
         }.map(toBook)
-      }.map(_.headOption)
-        .provide(dsLayer)
+      }.map(_.headOption).provide(dsLayer)
     } yield result
   end findById
 
@@ -126,20 +122,17 @@ case class PgBookRepository(ds: DataSource) extends BookRepository:
     run {
       quote {
         for {
-          books <- query[Books].filter(_.title == lift(title))
-          publishers <- query[Publishers].leftJoin(p =>
-            books.publisherId.contains(p.id)
-          )
-          booksAuthors <- query[BooksAuthors].leftJoin(ba =>
-            books.id == ba.bookId
-          )
-          authors <- query[Authors].leftJoin(a =>
-            booksAuthors.exists(_.authorId == a.id)
-          )
+          books <- query[Books]
+            .filter(b => b.title == lift(title))
+          publishers <- query[Publishers]
+            .leftJoin(p => books.publisherId.contains(p.id))
+          booksAuthors <- query[BooksAuthors]
+            .leftJoin(ba => books.id == ba.bookId)
+          authors <- query[Authors]
+            .leftJoin(a => booksAuthors.exists(ba => ba.authorId == a.id))
         } yield (books, publishers, authors)
       }.map(toBook)
-    }.map(_.headOption)
-      .provide(dsLayer)
+    }.map(_.headOption).provide(dsLayer)
   end findByTitle
 
   /** Создать книгу.
@@ -147,7 +140,7 @@ case class PgBookRepository(ds: DataSource) extends BookRepository:
     * @param book
     *   книга
     */
-  override def create(book: Book): Task[Option[Book]] =
+  override def create(book: Book): Task[Book] =
     transaction {
       for {
         publishers <- createBookPublisher(book.publisher)
@@ -163,26 +156,28 @@ case class PgBookRepository(ds: DataSource) extends BookRepository:
         } yield result
         authors <- createBookAuthor(book.author, books.id)
       } yield (books, publishers, authors)
-    }.map(toBook)
-      .option
-      .provide(dsLayer)
+    }.map(toBook).provide(dsLayer)
   end create
 
-  /** Создать издателя книги, если он представлен, но его нет в БД.
+  /** Создать издателя новой книги:
+    *   - издатель не представлен ([[None]]) => ничего не происходит,
+    *   - издатель представлен ([[Some]]), но его нет в БД => создаётся запись в
+    *     БД и возвращается,
+    *   - издатель представлен ([[Some]]) и есть в БД => возвращается запись из
+    *     БД.
     *
     * @param publisherOpt
-    *   издатель, если представлен
+    *   опциональный издатель
     */
   private def createBookPublisher(
       publisherOpt: Option[Publisher]
   ): Task[Option[Publishers]] =
-    if publisherOpt.isEmpty then ZIO.none
-    else
-      val publisher = publisherOpt.get
-      if publisher.id.isEmpty then
+    publisherOpt match
+      case None => ZIO.none
+      case Some(publisher) if publisher.id.isEmpty =>
         for {
           id <- Random.nextUUID
-          publishers <- run {
+          result <- run {
             quote {
               query[Publishers]
                 .insertValue(
@@ -190,26 +185,31 @@ case class PgBookRepository(ds: DataSource) extends BookRepository:
                 )
                 .returning(r => r)
             }
-          }.option
-            .provide(dsLayer)
-        } yield publishers
-      else
+          }.option.provide(dsLayer)
+        } yield result
+      case Some(publisher) =>
         for {
           uuid <- ZIO.getOrFail(publisher.id)
-          publishers <- run {
+          result <- run {
             quote {
               query[Publishers]
-                .filter(_.id == lift(uuid))
+                .filter(p => p.id == lift(uuid))
             }
-          }.map(_.headOption)
-            .provide(dsLayer)
-        } yield publishers
+          }.map(_.headOption).provide(dsLayer)
+        } yield result
   end createBookPublisher
 
-  /** Создать автора книги, если он представлен, но его нет в БД.
+  /** Создать автора новой книги:
+    *   - автор не представлен ([[None]]) => ничего не происходит,
+    *   - автор представлен ([[Some]]), но его нет в БД => создаётся запись в БД
+    *     и возвращается,
+    *   - автор представлен ([[Some]]) и есть в БД => возвращается запись из БД.
+    *
+    * Если автор представлен, то дополнительно создаётся соответствующая запись
+    * в отношении "Книги-Авторы".
     *
     * @param authorOpt
-    *   автор, если представлен
+    *   опциональный автор
     * @param bookId
     *   идентификатор книги
     */
@@ -217,44 +217,45 @@ case class PgBookRepository(ds: DataSource) extends BookRepository:
       authorOpt: Option[Author],
       bookId: UUID
   ): Task[Option[Authors]] =
-    if authorOpt.isEmpty then ZIO.none
-    else
-      val author = authorOpt.get
-      if author.id.isEmpty then
-        val created = for {
-          id <- Random.nextUUID
-          authors <- run {
-            quote {
-              query[Authors]
-                .insertValue(lift(Authors(id, author.name, author.country)))
-                .returning(r => r)
+    authorOpt match
+      case None => ZIO.none
+      case Some(author) if author.id.isEmpty =>
+        {
+          for {
+            id <- Random.nextUUID
+            result <- run {
+              quote {
+                query[Authors]
+                  .insertValue(lift(Authors(id, author.name, author.country)))
+                  .returning(r => r)
+              }
             }
-          }
-          _ <- run {
-            quote {
-              query[BooksAuthors]
-                .insertValue(lift(BooksAuthors(bookId, authors.id)))
+            _ <- run {
+              quote {
+                query[BooksAuthors]
+                  .insertValue(lift(BooksAuthors(bookId, result.id)))
+              }
             }
-          }
-        } yield authors
-        created.option.provide(dsLayer)
-      else
-        val selected = for {
-          uuid <- ZIO.getOrFail(author.id)
-          authors <- run {
-            quote {
-              query[Authors]
-                .filter(_.id == lift(uuid))
+          } yield result
+        }.option.provide(dsLayer)
+      case Some(author) =>
+        {
+          for {
+            uuid <- ZIO.getOrFail(author.id)
+            result <- run {
+              quote {
+                query[Authors]
+                  .filter(a => a.id == lift(uuid))
+              }
             }
-          }
-          _ <- run {
-            quote {
-              query[BooksAuthors]
-                .insertValue(lift(BooksAuthors(bookId, uuid)))
+            _ <- run {
+              quote {
+                query[BooksAuthors]
+                  .insertValue(lift(BooksAuthors(bookId, uuid)))
+              }
             }
-          }
-        } yield authors
-        selected.map(_.headOption).provide(dsLayer)
+          } yield result
+        }.map(_.headOption).provide(dsLayer)
   end createBookAuthor
 
   /** Изменить книгу.
@@ -262,7 +263,7 @@ case class PgBookRepository(ds: DataSource) extends BookRepository:
     * @param book
     *   книга
     */
-  override def update(book: Book): Task[Option[Book]] =
+  override def update(book: Book): Task[Book] =
     transaction {
       for {
         publishers <- createBookPublisher(book.publisher)
@@ -271,7 +272,7 @@ case class PgBookRepository(ds: DataSource) extends BookRepository:
           result <- run {
             quote {
               query[Books]
-                .filter(_.id == lift(id))
+                .filter(b => b.id == lift(id))
                 .updateValue(toBooksRow(id, book, publishers))
                 .returning(r => r)
             }
@@ -279,15 +280,19 @@ case class PgBookRepository(ds: DataSource) extends BookRepository:
         } yield result
         authors <- updateBookAuthor(book.author, books.id)
       } yield (books, publishers, authors)
-    }.map(toBook)
-      .option
-      .provide(dsLayer)
+    }.map(toBook).provide(dsLayer)
   end update
 
-  /** Обновить автора книги.
+  /** Обновить автора существующей книги:
+    *   - автор не представлен ([[None]]) => происходит удаление записей в
+    *     отношении "Книги-Авторы",
+    *   - автор представлен ([[Some]]), но его нет в БД => создаётся запись в БД
+    *     и возвращается (дополнительно создаётся соответствующая запись в
+    *     отношении "Книги-Авторы"),
+    *   - автор представлен ([[Some]]) и есть в БД => возвращается запись из БД.
     *
     * @param authorOpt
-    *   автор, если представлен
+    *   опциональный автор
     * @param bookId
     *   идентификатор книги
     */
@@ -295,38 +300,48 @@ case class PgBookRepository(ds: DataSource) extends BookRepository:
       authorOpt: Option[Author],
       bookId: UUID
   ): Task[Option[Authors]] =
-    if authorOpt.isEmpty then ZIO.none
-    else
-      val author = authorOpt.get
-      if author.id.isEmpty then
-        val created = for {
-          id <- Random.nextUUID
-          authors <- run {
-            quote {
-              query[Authors]
-                .insertValue(lift(Authors(id, author.name, author.country)))
-                .returning(r => r)
-            }
-          }
-          _ <- run {
+    authorOpt match
+      case None =>
+        {
+          run {
             quote {
               query[BooksAuthors]
-                .insertValue(lift(BooksAuthors(bookId, authors.id)))
+                .filter(ba => ba.bookId == lift(bookId))
+                .delete
             }
-          }
-        } yield authors
-        created.option.provide(dsLayer)
-      else
-        val selected = for {
-          uuid <- ZIO.getOrFail(author.id)
-          authors <- run {
-            quote {
-              query[Authors]
-                .filter(_.id == lift(uuid))
+          }.provide(dsLayer)
+        } *> ZIO.none
+      case Some(author) if author.id.isEmpty =>
+        {
+          for {
+            id <- Random.nextUUID
+            result <- run {
+              quote {
+                query[Authors]
+                  .insertValue(lift(Authors(id, author.name, author.country)))
+                  .returning(r => r)
+              }
             }
-          }
-        } yield authors
-        selected.map(_.headOption).provide(dsLayer)
+            _ <- run {
+              quote {
+                query[BooksAuthors]
+                  .insertValue(lift(BooksAuthors(bookId, result.id)))
+              }
+            }
+          } yield result
+        }.option.provide(dsLayer)
+      case Some(author) =>
+        {
+          for {
+            uuid <- ZIO.getOrFail(author.id)
+            result <- run {
+              quote {
+                query[Authors]
+                  .filter(a => a.id == lift(uuid))
+              }
+            }
+          } yield result
+        }.map(_.headOption).provide(dsLayer)
   end updateBookAuthor
 
   /** Удалить книгу.
@@ -342,14 +357,14 @@ case class PgBookRepository(ds: DataSource) extends BookRepository:
           _ <- run {
             quote {
               query[BooksAuthors]
-                .filter(_.bookId == lift(uuid))
+                .filter(ba => ba.bookId == lift(uuid))
                 .delete
             }
           }
           _ <- run {
             quote {
               query[Books]
-                .filter(_.id == lift(uuid))
+                .filter(b => b.id == lift(uuid))
                 .delete
             }
           }
@@ -364,6 +379,6 @@ object PgBookRepository:
 
   /** Слой репозитория книг. */
   val live: ZLayer[Any, Throwable, PgBookRepository] =
-    PostgresDataSource.live >>> ZLayer.fromFunction(ds => PgBookRepository(ds))
+    PostgresDataSource.live >>> ZLayer.fromFunction(PgBookRepository(_))
 
 end PgBookRepository

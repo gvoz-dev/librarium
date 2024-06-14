@@ -69,28 +69,26 @@ case class PgPublisherRepository(ds: DataSource) extends PublisherRepository:
       result <- run {
         quote {
           query[Publishers]
-            .filter(_.id == lift(uuid))
+            .filter(p => p.id == lift(uuid))
             .map(toPublisher)
         }
-      }.map(_.headOption)
-        .provide(dsLayer)
+      }.map(_.headOption).provide(dsLayer)
     } yield result
   end findById
 
   /** Получить издателя по названию.
     *
     * @param name
-    *   имя издателя
+    *   название издателя
     */
   override def findByName(name: String): Task[Option[Publisher]] =
     run {
       quote {
         query[Publishers]
-          .filter(_.name == lift(name))
+          .filter(p => p.name == lift(name))
           .map(toPublisher)
       }
-    }.map(_.headOption)
-      .provide(dsLayer)
+    }.map(_.headOption).provide(dsLayer)
   end findByName
 
   /** Создать издателя.
@@ -98,7 +96,7 @@ case class PgPublisherRepository(ds: DataSource) extends PublisherRepository:
     * @param publisher
     *   издатель
     */
-  override def create(publisher: Publisher): Task[Option[Publisher]] =
+  override def create(publisher: Publisher): Task[Publisher] =
     for {
       id <- Random.nextUUID
       result <- run {
@@ -107,8 +105,7 @@ case class PgPublisherRepository(ds: DataSource) extends PublisherRepository:
             .insertValue(toPublishersRow(id, publisher))
             .returning(toPublisher)
         }
-      }.option
-        .provide(dsLayer)
+      }.provide(dsLayer)
     } yield result
   end create
 
@@ -117,18 +114,17 @@ case class PgPublisherRepository(ds: DataSource) extends PublisherRepository:
     * @param publisher
     *   издатель
     */
-  override def update(publisher: Publisher): Task[Option[Publisher]] =
+  override def update(publisher: Publisher): Task[Publisher] =
     for {
       id <- ZIO.getOrFail(publisher.id)
       result <- run {
         quote {
           query[Publishers]
-            .filter(_.id == lift(id))
+            .filter(p => p.id == lift(id))
             .updateValue(toPublishersRow(id, publisher))
             .returning(toPublisher)
         }
-      }.option
-        .provide(dsLayer)
+      }.provide(dsLayer)
     } yield result
   end update
 
@@ -140,17 +136,16 @@ case class PgPublisherRepository(ds: DataSource) extends PublisherRepository:
   override def delete(id: String): Task[Unit] =
     for {
       uuid <- ZIO.fromTry(Try(UUID.fromString(id)))
-      result <- transaction {
+      _ <- transaction {
         run {
           quote {
             query[Publishers]
-              .filter(_.id == lift(uuid))
+              .filter(p => p.id == lift(uuid))
               .delete
           }
         }
-      }.unit
-        .provide(dsLayer)
-    } yield result
+      }.provide(dsLayer)
+    } yield ()
   end delete
 
 end PgPublisherRepository

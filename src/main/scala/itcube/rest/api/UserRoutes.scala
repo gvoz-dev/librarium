@@ -2,6 +2,7 @@ package itcube.rest.api
 
 import itcube.entities.User
 import itcube.repositories.user.UserRepository
+import itcube.services.user.UserService
 import zio.*
 import zio.http.*
 import zio.schema.codec.JsonCodec.schemaBasedBinaryCodec
@@ -15,7 +16,7 @@ object UserRoutes {
       Method.GET / "users" -> handler { (request: Request) =>
         {
           if (request.url.queryParams.isEmpty) {
-            UserRepository.all
+            UserService.all
               .mapBoth(
                 error => Response.internalServerError(error.getMessage),
                 users => Response(body = Body.from(users))
@@ -24,7 +25,7 @@ object UserRoutes {
             val names: Chunk[String] = request.url.queryParams("name")
             if (names.nonEmpty) {
               val name = names(0)
-              UserRepository
+              UserService
                 .findByName(name)
                 .mapBoth(
                   error => Response.internalServerError(error.getMessage),
@@ -46,7 +47,7 @@ object UserRoutes {
       Method.GET / "users" / string("id") -> handler {
         (id: String, _: Request) =>
           {
-            UserRepository
+            UserService
               .findById(id)
               .mapBoth(
                 error => Response.internalServerError(error.getMessage),
@@ -64,16 +65,11 @@ object UserRoutes {
       Method.POST / "users" -> handler { (request: Request) =>
         for {
           user <- request.body.to[User].orElseFail(Response.badRequest)
-          response <- UserRepository
+          response <- UserService
             .create(user)
             .mapBoth(
               error => Response.internalServerError(error.getMessage),
-              {
-                case Some(user) =>
-                  Response(body = Body.from(user))
-                case None =>
-                  Response.notFound(s"User not registered!")
-              }
+              success => Response(body = Body.from(success))
             )
         } yield response
       },
@@ -83,16 +79,11 @@ object UserRoutes {
         for {
           _ <- ZIO.logInfo("User patched!")
           user <- request.body.to[User].orElseFail(Response.badRequest)
-          response <- UserRepository
+          response <- UserService
             .update(user)
             .mapBoth(
               error => Response.internalServerError(error.getMessage),
-              {
-                case Some(user) =>
-                  Response(body = Body.from(user))
-                case None =>
-                  Response.notFound(s"User ${user.id} not updated!")
-              }
+              success => Response(body = Body.from(success))
             )
         } yield response
       },
@@ -101,7 +92,7 @@ object UserRoutes {
       Method.DELETE / "users" / string("id") -> handler {
         (id: String, _: Request) =>
           {
-            UserRepository
+            UserService
               .delete(id)
               .mapBoth(
                 error => Response.internalServerError(error.getMessage),
