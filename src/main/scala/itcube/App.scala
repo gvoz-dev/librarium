@@ -7,6 +7,7 @@ import itcube.repositories.comment.PgCommentRepository
 import itcube.repositories.publisher.PgPublisherRepository
 import itcube.repositories.user.PgUserRepository
 import itcube.repositories.userbook.PgUserBookRepository
+import itcube.rest.*
 import itcube.rest.api.*
 import zio.*
 import zio.config.typesafe.FromConfigSourceTypesafe
@@ -55,7 +56,7 @@ object App extends ZIOAppDefault:
 
   /** HTTP-Routes. */
   private val routes =
-    AuthorRoutes() ++ PublisherRoutes() ++ BookRoutes() ++ UserRoutes()
+    PublisherRoutes() ++ BookRoutes() ++ UserRoutes() ++ RestApiRoutes()
 
   /** Запуск ZIO-приложения. */
   def run: ZIO[Scope, Any, Any] =

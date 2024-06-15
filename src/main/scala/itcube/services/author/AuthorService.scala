@@ -2,34 +2,53 @@ package itcube.services.author
 
 import itcube.entities.Author
 import itcube.repositories.author.AuthorRepository
+import itcube.services.*
 import zio.ZIO
 
 /** Сервис авторов. */
 object AuthorService:
 
   /** Получить всех авторов. */
-  def all: ZIO[AuthorRepository, Throwable, List[Author]] =
-    ZIO.serviceWithZIO[AuthorRepository](_.all)
+  def all: ZIO[AuthorRepository, ServiceError, List[Author]] =
+    ZIO
+      .serviceWithZIO[AuthorRepository](_.all)
+      .mapError(e => QueryError(e.getMessage))
+      .flatMap {
+        case Nil  => ZIO.fail(NotFoundError("Authors not found"))
+        case list => ZIO.succeed(list)
+      }
 
-  /** Получить автора по ID.
+  /** Найти автора по ID.
     *
     * @param id
     *   уникальный идентификатор автора (строка UUID).
     */
   def findById(
       id: String
-  ): ZIO[AuthorRepository, Throwable, Option[Author]] =
-    ZIO.serviceWithZIO[AuthorRepository](_.findById(id))
+  ): ZIO[AuthorRepository, ServiceError, Author] =
+    ZIO
+      .serviceWithZIO[AuthorRepository](_.findById(id))
+      .mapError(e => QueryError(e.getMessage))
+      .flatMap {
+        case None => ZIO.fail(NotFoundError(s"Author not found by ID: $id"))
+        case Some(author) => ZIO.succeed(author)
+      }
 
-  /** Получить автора по имени.
+  /** Найти авторов по имени.
     *
     * @param name
     *   имя автора
     */
   def findByName(
       name: String
-  ): ZIO[AuthorRepository, Throwable, Option[Author]] =
-    ZIO.serviceWithZIO[AuthorRepository](_.findByName(name))
+  ): ZIO[AuthorRepository, ServiceError, List[Author]] =
+    ZIO
+      .serviceWithZIO[AuthorRepository](_.findByName(name))
+      .mapError(e => QueryError(e.getMessage))
+      .flatMap {
+        case Nil => ZIO.fail(NotFoundError(s"Authors not found by name: $name"))
+        case list => ZIO.succeed(list)
+      }
 
   /** Создать автора.
     *
@@ -38,14 +57,15 @@ object AuthorService:
     */
   def create(
       author: Author
-  ): ZIO[AuthorRepository, Throwable, Author] =
+  ): ZIO[AuthorRepository, QueryError, Author] =
     for {
       result <- ZIO
         .serviceWithZIO[AuthorRepository](_.create(author))
+        .mapError(e => QueryError(e.getMessage))
         .onError(e =>
-          ZIO.logError(s"Author `$author` not created:\n${e.prettyPrint}")
+          ZIO.logError(s"Author $author not created:\n${e.prettyPrint}")
         )
-      _ <- ZIO.logInfo(s"Author `$result` created")
+      _ <- ZIO.logInfo(s"Author $result created")
     } yield result
 
   /** Изменить автора.
@@ -55,14 +75,15 @@ object AuthorService:
     */
   def update(
       author: Author
-  ): ZIO[AuthorRepository, Throwable, Author] =
+  ): ZIO[AuthorRepository, QueryError, Author] =
     for {
       result <- ZIO
         .serviceWithZIO[AuthorRepository](_.update(author))
+        .mapError(e => QueryError(e.getMessage))
         .onError(e =>
-          ZIO.logError(s"Author `$author` not updated:\n${e.prettyPrint}")
+          ZIO.logError(s"Author $author not updated:\n${e.prettyPrint}")
         )
-      _ <- ZIO.logInfo(s"Author `$result` updated")
+      _ <- ZIO.logInfo(s"Author $result updated")
     } yield result
 
   /** Удалить автора.
@@ -72,14 +93,15 @@ object AuthorService:
     */
   def delete(
       id: String
-  ): ZIO[AuthorRepository, Throwable, Unit] =
+  ): ZIO[AuthorRepository, QueryError, Unit] =
     for {
       _ <- ZIO
         .serviceWithZIO[AuthorRepository](_.delete(id))
+        .mapError(e => QueryError(e.getMessage))
         .onError(e =>
-          ZIO.logError(s"Author `$id` not deleted:\n${e.prettyPrint}")
+          ZIO.logError(s"Author ($id) not deleted:\n${e.prettyPrint}")
         )
-      _ <- ZIO.logInfo(s"Author `$id` deleted")
+      _ <- ZIO.logInfo(s"Author ($id) deleted")
     } yield ()
 
 end AuthorService

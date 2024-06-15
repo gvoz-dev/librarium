@@ -31,5 +31,6 @@ libraryDependencies += "org.postgresql" % "postgresql" % "42.7.3"
 libraryDependencies += "dev.zio" %% "zio-test" % "2.1.2" % Test
 libraryDependencies += "dev.zio" %% "zio-test-sbt" % "2.1.2" % Test
 
+libraryDependencies += "org.flywaydb" % "flyway-database-postgresql" % "10.15.0" % Test
 libraryDependencies += "io.github.scottweaver" %% "zio-2-0-testcontainers-postgresql" % "0.10.0" % Test
 libraryDependencies += "io.github.scottweaver" %% "zio-2-0-db-migration-aspect" % "0.10.0" % Test

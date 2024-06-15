@@ -9,19 +9,19 @@ trait AuthorRepository:
   /** Получить всех авторов. */
   def all: Task[List[Author]]
 
-  /** Получить автора по ID.
+  /** Найти автора по ID.
     *
     * @param id
     *   уникальный идентификатор автора (строка UUID).
     */
   def findById(id: String): Task[Option[Author]]
 
-  /** Получить автора по имени.
+  /** Найти авторов по имени.
     *
     * @param name
     *   имя автора
     */
-  def findByName(name: String): Task[Option[Author]]
+  def findByName(name: String): Task[List[Author]]
 
   /** Создать автора.
     *

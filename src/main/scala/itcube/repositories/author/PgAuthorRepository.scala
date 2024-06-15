@@ -55,7 +55,7 @@ case class PgAuthorRepository(ds: DataSource) extends AuthorRepository:
     }.provide(dsLayer)
   end all
 
-  /** Получить автора по ID.
+  /** Найти автора по ID.
     *
     * @param id
     *   уникальный идентификатор автора (строка UUID).
@@ -73,19 +73,19 @@ case class PgAuthorRepository(ds: DataSource) extends AuthorRepository:
     } yield result
   end findById
 
-  /** Получить автора по имени.
+  /** Найти авторов по имени.
     *
     * @param name
     *   имя автора
     */
-  override def findByName(name: String): Task[Option[Author]] =
+  override def findByName(name: String): Task[List[Author]] =
     run {
       quote {
         query[Authors]
           .filter(a => a.name == lift(name))
           .map(toAuthor)
       }
-    }.map(_.headOption).provide(dsLayer)
+    }.provide(dsLayer)
   end findByName
 
   /** Создать автора.

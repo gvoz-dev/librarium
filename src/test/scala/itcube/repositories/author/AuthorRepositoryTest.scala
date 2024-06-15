@@ -5,16 +5,18 @@ import io.github.scottweaver.zio.testcontainers.postgres.ZPostgreSQLContainer
 import itcube.LibraPostgresContainer
 import itcube.entities.Author
 import itcube.repositories.RepoLayers
+import itcube.services.*
 import itcube.services.author.AuthorService
 import zio.*
 import zio.test.*
+import zio.test.Assertion.*
 import zio.test.TestAspect.*
 
 import java.util.UUID
 
 object AuthorRepositoryTest extends ZIOSpecDefault:
 
-  private def authorRepoSpec: Spec[AuthorRepository, Throwable] =
+  private def authorRepoSpec: Spec[AuthorRepository, Throwable | ServiceError] =
     suite("Author repository/service functions")(
       test("#all should return 3 authors") {
         for {
@@ -32,38 +34,33 @@ object AuthorRepositoryTest extends ZIOSpecDefault:
           )
           _ <- Console.printLine(author)
         } yield assertTrue(
-          author.isDefined,
-          author.get.name == "Donald Knuth"
+          author.name == "Donald Knuth"
         )
       },
-      test("#findById should return none if the author does not exist") {
+      test("#findById should fail if the author does not exist") {
         for {
-          author <- AuthorService.findById(
-            "37d706ed-9591-4fd3-8811-9970194347da"
-          )
-          _ <- Console.printLine(author)
-        } yield assertTrue(
-          author.isEmpty
-        )
+          result <- AuthorService
+            .findById(
+              "37d706ed-9591-4fd3-8811-9970194347da"
+            )
+            .exit
+        } yield assert(result)(fails(isSubtype[NotFoundError](anything)))
       },
       test("#findByName should return the author if it exists") {
         for {
           author <- AuthorService.findByName("Martin Odersky")
           _ <- Console.printLine(author)
         } yield assertTrue(
-          author.isDefined,
-          author.get.id.contains(
+          author.nonEmpty,
+          author.head.id.contains(
             UUID.fromString("7a7713e0-a518-4e3a-bf8f-bc984150a3b4")
           )
         )
       },
-      test("#findByName should return none if the author does not exist") {
+      test("#findByName should fail if the author does not exist") {
         for {
-          author <- AuthorService.findByName("Frank Herbert")
-          _ <- Console.printLine(author)
-        } yield assertTrue(
-          author.isEmpty
-        )
+          result <- AuthorService.findByName("Frank Herbert").exit
+        } yield assert(result)(fails(isSubtype[ServiceError](anything)))
       },
       test("#create author") {
         val author = Author(None, "Gvozdev Roman", Some("Russia"))
@@ -73,8 +70,8 @@ object AuthorRepositoryTest extends ZIOSpecDefault:
           selected <- AuthorService.findByName("Gvozdev Roman")
           _ <- Console.printLine(selected)
         } yield assertTrue(
-          selected.isDefined,
-          selected.get.id == inserted.id
+          selected.nonEmpty,
+          selected.head.id == inserted.id
         )
       },
       test("#update author") {
@@ -85,20 +82,17 @@ object AuthorRepositoryTest extends ZIOSpecDefault:
           selected <- AuthorService.findByName("Martin Odersky")
           _ <- Console.printLine(selected)
         } yield assertTrue(
-          selected.isDefined,
-          selected.get.country.contains("Switzerland")
+          selected.nonEmpty,
+          selected.head.country.contains("Switzerland")
         )
       },
       test("#delete author") {
         for {
           author <- AuthorService.findByName("Gvozdev Roman")
           _ <- Console.printLine(author)
-          _ <- AuthorService.delete(author.get.id.map(_.toString).get)
-          deleted <- AuthorService.findByName("Gvozdev Roman")
-        } yield assertTrue(
-          author.isDefined,
-          deleted.isEmpty
-        )
+          _ <- AuthorService.delete(author.head.id.map(_.toString).get)
+          result <- AuthorService.findByName("Gvozdev Roman").exit
+        } yield assert(result)(fails(isSubtype[ServiceError](anything)))
       }
     )
 
