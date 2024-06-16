@@ -2,6 +2,8 @@ package itcube.rest.api
 
 import itcube.entities.Author
 import itcube.repositories.author.AuthorRepository
+import itcube.rest.*
+import itcube.rest.JsonWebToken.*
 import itcube.services.*
 import itcube.services.author.AuthorService
 import zio.*
@@ -16,7 +18,7 @@ import java.util.UUID
 /** API авторов. */
 object AuthorApi:
 
-  private val path = "api" / "v1" / "authors"
+  private val path: PathCodec[Unit] = "api" / "v1" / "authors"
 
   // GET api/v1/authors
   // GET api/v1/authors?name={name}
@@ -36,7 +38,7 @@ object AuthorApi:
         Status.NotFound,
         Doc.p("Not found error")
       )
-      .outError[QueryError](
+      .outError[InvalidQueryError](
         Status.InternalServerError,
         Doc.p("Service error")
       )
@@ -48,8 +50,8 @@ object AuthorApi:
           case Some(name) => AuthorService.findByName(name)
           case _          => AuthorService.all
         result.mapError {
-          case e: NotFoundError => Right(e)
-          case e: QueryError    => Left(e)
+          case e: NotFoundError     => Right(e)
+          case e: InvalidQueryError => Left(e)
         }
       )
     )
@@ -65,7 +67,7 @@ object AuthorApi:
         Status.NotFound,
         Doc.p("Not found error")
       )
-      .outError[QueryError](
+      .outError[InvalidQueryError](
         Status.InternalServerError,
         Doc.p("Service error")
       )
@@ -76,32 +78,42 @@ object AuthorApi:
         AuthorService
           .findById(id)
           .mapError {
-            case e: QueryError    => Left(e)
-            case e: NotFoundError => Right(e)
+            case e: InvalidQueryError => Left(e)
+            case e: NotFoundError     => Right(e)
           }
       )
     )
 
   // POST api/v1/authors
   private val postAuthorEndpoint =
-    Endpoint(
-      (RoutePattern.POST / path)
-        ?? Doc.p("Route for creating author")
-    )
+    Endpoint((RoutePattern.POST / path) ?? Doc.p("Route for creating author"))
+      .header(authHeader ?? Doc.p("JSON Web Token"))
       .in[Author](Doc.p("Author"))
       .examplesIn(
-        ("Harold Abelson", Author(scala.None, "Harold Abelson", Some("USA"))),
-        ("Gerald Sussman", Author(scala.None, "Gerald Sussman", Some("USA")))
+        (
+          "Add Harold Abelson",
+          (
+            "Replace this with the token from the login",
+            Author(scala.None, "Harold Abelson", Some("USA"))
+          )
+        )
       )
       .out[Author](Doc.p("Created author"))
-      .outError[QueryError](
+      .outError[InvalidQueryError](
         Status.InternalServerError,
         Doc.p("Service error")
+      )
+      .outError[AuthenticationError](
+        Status.Unauthorized,
+        Doc.p("Invalid token")
       )
 
   private val postAuthorRoute =
     postAuthorEndpoint.implement(
-      handler((author: Author) => AuthorService.create(author))
+      handler((token: String, author: Author) =>
+        jwtValidate(token).mapError(Left(_))
+          *> AuthorService.create(author).mapError(Right(_))
+      )
     )
 
   // PUT api/v1/authors
@@ -122,7 +134,7 @@ object AuthorApi:
         )
       )
       .out[Author](Doc.p("Updated author"))
-      .outError[QueryError](
+      .outError[InvalidQueryError](
         Status.InternalServerError,
         Doc.p("Service error")
       )
@@ -139,7 +151,7 @@ object AuthorApi:
         ?? Doc.p("Route for deleting author")
     )
       .out[Unit]
-      .outError[QueryError](
+      .outError[InvalidQueryError](
         Status.InternalServerError,
         Doc.p("Service error")
       )
@@ -150,13 +162,7 @@ object AuthorApi:
     )
 
   /** Набор конечных точек API авторов. */
-  val endpoints: Set[Endpoint[
-    ? >: Unit & String,
-    ? >: Option[String] & String & Author <: Serializable,
-    ? >: Either[QueryError, NotFoundError] & QueryError <: Product,
-    ? >: List[Author] & Author & Unit,
-    None
-  ]] = Set(
+  val endpoints = Set(
     getAuthorsEndpoint,
     getAuthorByIdEndpoint,
     postAuthorEndpoint,

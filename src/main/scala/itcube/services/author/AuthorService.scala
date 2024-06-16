@@ -12,7 +12,7 @@ object AuthorService:
   def all: ZIO[AuthorRepository, ServiceError, List[Author]] =
     ZIO
       .serviceWithZIO[AuthorRepository](_.all)
-      .mapError(e => QueryError(e.getMessage))
+      .mapError(e => InvalidQueryError(e.getMessage))
       .flatMap {
         case Nil  => ZIO.fail(NotFoundError("Authors not found"))
         case list => ZIO.succeed(list)
@@ -28,7 +28,7 @@ object AuthorService:
   ): ZIO[AuthorRepository, ServiceError, Author] =
     ZIO
       .serviceWithZIO[AuthorRepository](_.findById(id))
-      .mapError(e => QueryError(e.getMessage))
+      .mapError(e => InvalidQueryError(e.getMessage))
       .flatMap {
         case None => ZIO.fail(NotFoundError(s"Author not found by ID: $id"))
         case Some(author) => ZIO.succeed(author)
@@ -44,7 +44,7 @@ object AuthorService:
   ): ZIO[AuthorRepository, ServiceError, List[Author]] =
     ZIO
       .serviceWithZIO[AuthorRepository](_.findByName(name))
-      .mapError(e => QueryError(e.getMessage))
+      .mapError(e => InvalidQueryError(e.getMessage))
       .flatMap {
         case Nil => ZIO.fail(NotFoundError(s"Authors not found by name: $name"))
         case list => ZIO.succeed(list)
@@ -57,11 +57,11 @@ object AuthorService:
     */
   def create(
       author: Author
-  ): ZIO[AuthorRepository, QueryError, Author] =
+  ): ZIO[AuthorRepository, InvalidQueryError, Author] =
     for {
       result <- ZIO
         .serviceWithZIO[AuthorRepository](_.create(author))
-        .mapError(e => QueryError(e.getMessage))
+        .mapError(e => InvalidQueryError(e.getMessage))
         .onError(e =>
           ZIO.logError(s"Author $author not created:\n${e.prettyPrint}")
         )
@@ -75,11 +75,11 @@ object AuthorService:
     */
   def update(
       author: Author
-  ): ZIO[AuthorRepository, QueryError, Author] =
+  ): ZIO[AuthorRepository, InvalidQueryError, Author] =
     for {
       result <- ZIO
         .serviceWithZIO[AuthorRepository](_.update(author))
-        .mapError(e => QueryError(e.getMessage))
+        .mapError(e => InvalidQueryError(e.getMessage))
         .onError(e =>
           ZIO.logError(s"Author $author not updated:\n${e.prettyPrint}")
         )
@@ -93,11 +93,11 @@ object AuthorService:
     */
   def delete(
       id: String
-  ): ZIO[AuthorRepository, QueryError, Unit] =
+  ): ZIO[AuthorRepository, InvalidQueryError, Unit] =
     for {
       _ <- ZIO
         .serviceWithZIO[AuthorRepository](_.delete(id))
-        .mapError(e => QueryError(e.getMessage))
+        .mapError(e => InvalidQueryError(e.getMessage))
         .onError(e =>
           ZIO.logError(s"Author ($id) not deleted:\n${e.prettyPrint}")
         )

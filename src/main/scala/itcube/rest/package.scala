@@ -1,39 +1,32 @@
 package itcube
 
-import itcube.repositories.author.AuthorRepository
-import itcube.rest.api.*
 import zio.http.*
 import zio.http.codec.*
-import zio.http.codec.PathCodec.*
-import zio.http.endpoint.openapi.*
+import zio.schema.*
 
 package object rest:
 
-  /** Маршруты REST. */
-  object RestApiRoutes:
+  /** Кодек для HTTP-заголовка авторизации.
+    *
+    * Примечание: стандартный заголовок "Authorization" работает отлично при
+    * тестировании в CURL, но не в сгенерированном SwaggerUI, поэтому (как
+    * временное решение) используется кастомный заголовок для передачи токена.
+    */
+  val authHeader: HeaderCodec[String] = HttpCodec.name[String]("X-JWT-Auth")
 
-    /** Компиляция конечных точек. */
-    private val endpoints =
-      AuthorApi.endpoints
+  /** Ошибка HTTP. */
+  sealed trait HttpError
 
-    /** Компиляция маршрутов API. */
-    private val routes =
-      AuthorApi.routes
+  /** Ошибка аутентификации пользователя. */
+  case class AuthenticationError(message: String) extends HttpError
 
-    /** Генерация OpenAPI из конечных точек. */
-    private val openAPI = OpenAPIGen.fromEndpoints(
-      title = "Librarium API",
-      version = "1.0",
-      endpoints
-    )
+  object AuthenticationError:
+    given schema: Schema[AuthenticationError] = DeriveSchema.gen
 
-    /** Маршрут SwaggerUI. */
-    private val swaggerRoutes =
-      SwaggerUI.routes("docs" / "openapi", openAPI)
+  /** Некорректный запрос. */
+  case class BadRequestError(message: String) extends HttpError
 
-    /** Маршруты API и сгенерированного SwaggerUI. */
-    def apply(): Routes[AuthorRepository, Response] = routes ++ swaggerRoutes
-
-  end RestApiRoutes
+  object BadRequestError:
+    given schema: Schema[BadRequestError] = DeriveSchema.gen
 
 end rest

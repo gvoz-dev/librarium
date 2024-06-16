@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS "Publishers"
     "name" character varying(50) NOT NULL,
     "country" character varying(20) NOT NULL,
     -- в будущем "страну" можно перенести в отдельную таблицу
+    -- в будущем можно добавить "описание" и "логотип" издателя
 
     CONSTRAINT "PublisherPK" PRIMARY KEY ("id")
 );
@@ -18,6 +19,8 @@ CREATE TABLE IF NOT EXISTS "Authors"
     "id" uuid NOT NULL,
     "name" character varying(50) NOT NULL,
     "country" character varying(20),
+    -- в будущем "страну" можно перенести в отдельную таблицу
+    -- в будущем можно добавить "биографию" и "портрет" автора
 
     CONSTRAINT "AuthorPK" PRIMARY KEY ("id")
 );
@@ -107,7 +110,7 @@ CREATE TABLE IF NOT EXISTS "Comments"
     "text" text NOT NULL,
     "isPrivate" boolean DEFAULT FALSE,
     "date" timestamp NOT NULL,
-    -- в будущем нужно добавить "время последнего изменения"
+    -- в будущем можно добавить "время последнего изменения"
 
     CONSTRAINT "CommentPK" PRIMARY KEY ("id"),
     CONSTRAINT "UserBookFK" FOREIGN KEY ("userBookId")

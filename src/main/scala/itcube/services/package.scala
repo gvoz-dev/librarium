@@ -8,10 +8,10 @@ package object services:
   sealed trait ServiceError
 
   /** Ошибка запроса к СУБД. */
-  case class QueryError(message: String) extends ServiceError
+  case class InvalidQueryError(message: String) extends ServiceError
 
-  object QueryError:
-    given schema: Schema[QueryError] = DeriveSchema.gen
+  object InvalidQueryError:
+    given schema: Schema[InvalidQueryError] = DeriveSchema.gen
 
   /** Ошибка отсутствия результатов запроса. */
   case class NotFoundError(message: String) extends ServiceError
