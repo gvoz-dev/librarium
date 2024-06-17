@@ -7,6 +7,7 @@ import itcube.entities.Author
 import itcube.repositories.RepoLayers
 import itcube.services.*
 import itcube.services.author.AuthorService
+import itcube.utils.Errors.*
 import zio.*
 import zio.test.*
 import zio.test.Assertion.*

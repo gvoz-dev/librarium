@@ -3,9 +3,11 @@ package itcube.rest.api
 import itcube.entities.Author
 import itcube.repositories.author.AuthorRepository
 import itcube.rest.*
-import itcube.rest.JsonWebToken.*
 import itcube.services.*
 import itcube.services.author.AuthorService
+import itcube.utils.Errors.*
+import itcube.utils.JsonWebToken.*
+import itcube.utils.Security
 import zio.*
 import zio.http.*
 import zio.http.codec.*
@@ -111,8 +113,11 @@ object AuthorApi:
   private val postAuthorRoute =
     postAuthorEndpoint.implement(
       handler((token: String, author: Author) =>
-        jwtValidate(token).mapError(Left(_))
-          *> AuthorService.create(author).mapError(Right(_))
+        for {
+          secret <- Security.secret
+          result <- validateJwt(token, secret).mapError(Left(_))
+            *> AuthorService.create(author).mapError(Right(_))
+        } yield result
       )
     )
 
@@ -171,7 +176,7 @@ object AuthorApi:
   )
 
   /** Набор маршрутов API авторов. */
-  val routes: Routes[AuthorRepository, Response] = Routes(
+  val routes = Routes(
     getAuthorsRoute,
     getAuthorByIdRoute,
     postAuthorRoute,

@@ -1,51 +1,61 @@
 package itcube.rest.api
 
 import itcube.repositories.user.UserRepository
-import itcube.rest.*
+import itcube.rest.{Credentials, *}
 import itcube.services.user.UserService
+import itcube.utils.*
+import itcube.utils.Errors.*
 import zio.*
 import zio.http.*
 import zio.http.codec.*
 import zio.http.codec.PathCodec.*
 import zio.http.endpoint.*
-import zio.schema.*
 
-case class Login(email: String, password: String)
+/** API аутентификации пользователя. */
+object LoginApi:
 
-object Login:
-  given schema: Schema[Login] = DeriveSchema.gen
+  private val path: PathCodec[Unit] = "api" / "v1" / "login"
 
-case class Bearer(token: String)
-
-object Bearer:
-  given schema: Schema[Bearer] = DeriveSchema.gen
-
-/** API аутентификации. */
-object LoginApi {
-
-  private val path = "api" / "v1" / "login"
-
+  // POST api/v1/login
   private val loginEndpoint =
     Endpoint((RoutePattern.POST / path) ?? Doc.p("Endpoint for login"))
-      .in[Login](Doc.p("Login"))
+      .in[Credentials](Doc.p("Login credentials"))
       .examplesIn(
-        ("Administrator", Login("admin@example.com", "12345"))
+        ("Administrator", Credentials("admin@example.com", "12345")),
+        ("User", Credentials("roman@example.com", "qwe"))
       )
-      .out[Bearer](Doc.p("Token"))
+      .out[Token](Doc.p("JSON Web Token"))
       .outError[AuthenticationError](Status.Unauthorized)
 
   private val loginRoute =
     loginEndpoint.implement(
-      handler((login: Login) =>
+      handler((login: Credentials) =>
         UserService
           .findByEmail(login.email)
-          .mapError(e => AuthenticationError("Authentication service error"))
+          .orElseFail(AuthenticationError("Authentication service error"))
           .flatMap {
+            // Пользователь с данной электронной почтой существует
             case Some(user) =>
-              if (login.password == user.password)
-                ZIO.succeed(Bearer(JsonWebToken.jwtEncode(user.id.get)))
-              else
-                ZIO.fail(AuthenticationError("Incorrect password"))
+              Security
+                .validatePassword(login.password, user.password)
+                .flatMap {
+                  // Пароль является валидным
+                  case true =>
+                    for {
+                      userId <- ZIO
+                        .fromOption(user.id)
+                        .orElseFail(
+                          AuthenticationError("Authentication service error")
+                        )
+                      secret <- Security.secret
+                      result <- ZIO
+                        .succeed(Token(JsonWebToken.encodeJwt(userId, secret)))
+                    } yield result
+                  // Пароль валидным не является
+                  case false =>
+                    ZIO.fail(AuthenticationError("Incorrect password"))
+                }
+            // Не существует пользователя с данной электронной почтой
             case None => ZIO.fail(AuthenticationError("Incorrect email"))
           }
       )
@@ -57,8 +67,8 @@ object LoginApi {
   )
 
   /** Набор маршрутов API аутентификации. */
-  val routes: Routes[UserRepository, Nothing] = Routes(
+  val routes = Routes(
     loginRoute
   )
 
-}
+end LoginApi

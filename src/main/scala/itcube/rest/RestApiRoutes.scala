@@ -8,11 +8,11 @@ import zio.http.endpoint.openapi.*
 /** Маршруты REST. */
 object RestApiRoutes:
 
-  /** Компиляция конечных точек. */
+  /** Коллекция конечных точек. */
   private val endpoints =
     LoginApi.endpoints ++ AuthorApi.endpoints
 
-  /** Компиляция маршрутов API. */
+  /** Коллекция маршрутов API. */
   private val routes =
     LoginApi.routes ++ AuthorApi.routes
 

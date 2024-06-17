@@ -1,6 +1,7 @@
-package itcube.rest
+package itcube.utils
 
-import pdi.jwt.{Jwt, JwtAlgorithm, JwtClaim}
+import itcube.utils.Errors.AuthenticationError
+import pdi.jwt.*
 import zio.ZIO
 
 import java.util.UUID
@@ -11,12 +12,8 @@ object JsonWebToken:
 
   given clock: java.time.Clock = java.time.Clock.systemUTC()
 
-  private val secretKey = "LibrariumSecretKey"
-
-  def secret: String = secretKey
-
   /** Закодировать JWT. */
-  def jwtEncode(userId: UUID, secretKey: String = secretKey): String =
+  def encodeJwt(userId: UUID, secretKey: String): String =
     Jwt.encode(
       JwtClaim(subject = Some(userId.toString)).issuedNow.expiresIn(3600),
       secretKey,
@@ -24,22 +21,22 @@ object JsonWebToken:
     )
 
   /** Раскодировать JWT. */
-  def jwtDecode(token: String, secretKey: String = secretKey): Try[JwtClaim] =
+  def decodeJwt(token: String, secretKey: String): Try[JwtClaim] =
     Jwt.decode(token, secretKey, Seq(JwtAlgorithm.HS256))
 
   /** Произвести валидацию JWT. */
-  def jwtValidate(
+  def validateJwt(
       token: String,
-      secretKey: String = secretKey
+      secretKey: String
   ): ZIO[Any, AuthenticationError, String] =
     ZIO
-      .fromTry(jwtDecode(token, secretKey))
+      .fromTry(decodeJwt(token, secretKey))
       .orElseFail(AuthenticationError("Invalid or expired token"))
       .flatMap(claim =>
         ZIO
           .fromOption(claim.subject)
           .orElseFail(AuthenticationError("Missing subject claim"))
       )
-  end jwtValidate
+  end validateJwt
 
 end JsonWebToken

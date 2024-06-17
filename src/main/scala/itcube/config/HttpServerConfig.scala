@@ -3,7 +3,15 @@ package itcube.config
 import zio.Config
 import zio.config.magnolia.deriveConfig
 
-/** Конфигурация HTTP-сервера. */
+/** Конфигурация HTTP-сервера.
+  *
+  * @param host
+  *   хост
+  * @param port
+  *   порт
+  * @param nThreads
+  *   количество потоков Netty
+  */
 case class HttpServerConfig(
     host: String,
     port: Int,

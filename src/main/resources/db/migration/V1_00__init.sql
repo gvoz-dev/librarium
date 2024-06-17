@@ -1,35 +1,43 @@
+-- Издательства
 CREATE TABLE IF NOT EXISTS "Publishers"
 (
     "id" uuid NOT NULL,
-    "name" character varying(50) NOT NULL,
-    "country" character varying(20) NOT NULL,
+    "name" text NOT NULL,
+    "country" text NOT NULL,
+    -- в будущем можно перенести "страну" в отдельную таблицу
+    -- в будущем можно добавить "описание" и "логотип" издателя
 
     CONSTRAINT "PublisherPK" PRIMARY KEY ("id")
 );
 
+-- Авторы
 CREATE TABLE IF NOT EXISTS "Authors"
 (
     "id" uuid NOT NULL,
-    "name" character varying(50) NOT NULL,
-    "country" character varying(20),
+    "name" text NOT NULL,
+    "country" text,
+    -- в будущем можно перенести "страну" в отдельную таблицу
+    -- в будущем можно добавить "биографию" и "портрет" автора
 
     CONSTRAINT "AuthorPK" PRIMARY KEY ("id")
 );
 
+-- Книги
 CREATE TABLE IF NOT EXISTS "Books"
 (
     "id" uuid NOT NULL,
-    "title" character varying(50) NOT NULL,
+    "title" text NOT NULL,
     "isbn" character varying(10),
     "isbn13" character varying(13),
-    "edition" character varying(20),
+    "edition" text,
     "year" integer,
     "pages" integer,
     "image" text,
     "description" text,
-    "language" character varying(20),
+    "language" text,
     "category" text,
     "publisherId" uuid,
+    -- в будущем "язык" и "категорию(-ии)" можно перенести в отдельные таблицы
 
     CONSTRAINT "BookPK" PRIMARY KEY ("id"),
     CONSTRAINT "PublisherFK" FOREIGN KEY ("publisherId")
@@ -38,6 +46,7 @@ CREATE TABLE IF NOT EXISTS "Books"
         ON DELETE SET NULL
 );
 
+-- Книги-Авторы
 CREATE TABLE IF NOT EXISTS "BooksAuthors"
 (
     "bookId" uuid NOT NULL,
@@ -54,17 +63,20 @@ CREATE TABLE IF NOT EXISTS "BooksAuthors"
         ON DELETE CASCADE
 );
 
+-- Пользователи
 CREATE TABLE IF NOT EXISTS "Users"
 (
     "id" uuid NOT NULL,
-    "name" character varying(50) NOT NULL,
-    "email" character varying(50) NOT NULL UNIQUE,
-    "password" character varying(50) NOT NULL,
-    "role" character varying(20) NOT NULL,
+    "name" text NOT NULL,
+    "email" character varying(320) NOT NULL UNIQUE,
+    "password" text NOT NULL,
+    "role" text NOT NULL,
+    -- в будущем можно перенести "роль" в отдельную таблицу
 
     CONSTRAINT "UsersPK" PRIMARY KEY ("id")
 );
 
+-- Пользователи-Книги
 CREATE TABLE IF NOT EXISTS "UsersBooks"
 (
     "id" uuid NOT NULL,
@@ -87,6 +99,7 @@ CREATE TABLE IF NOT EXISTS "UsersBooks"
     CHECK (("progress" IS NULL) OR ("progress" BETWEEN 0 AND 100))
 );
 
+-- Комментарии
 CREATE TABLE IF NOT EXISTS "Comments"
 (
     "id" uuid NOT NULL,
@@ -94,6 +107,7 @@ CREATE TABLE IF NOT EXISTS "Comments"
     "text" text NOT NULL,
     "isPrivate" boolean DEFAULT FALSE,
     "date" timestamp NOT NULL,
+    -- в будущем можно добавить "время последнего изменения"
 
     CONSTRAINT "CommentPK" PRIMARY KEY ("id"),
     CONSTRAINT "UserBookFK" FOREIGN KEY ("userBookId")

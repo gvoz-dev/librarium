@@ -46,14 +46,16 @@ VALUES
         'ea962bb3-8f66-4256-bea5-8851c8f37dfb',
         'admin',
         'admin@example.com',
-        '12345',
+        -- SHA-256 для пароля 12345
+        '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5',
         'admin'
     ),
     (
         'ca3e509d-06cf-4655-802a-7f8355339e2c',
         'roman',
         'roman@example.com',
-        'qwe',
+        -- SHA-256 для пароля qwe
+        '489cd5dbc708c7e541de4d7cd91ce6d0f1613573b7fc5b40d3942ccb9555cf35',
         'user'
     );
 

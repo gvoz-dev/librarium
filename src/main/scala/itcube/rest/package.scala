@@ -14,19 +14,26 @@ package object rest:
     */
   val authHeader: HeaderCodec[String] = HttpCodec.name[String]("X-JWT-Auth")
 
-  /** Ошибка HTTP. */
-  sealed trait HttpError
+  /** Учётные данные пользователя.
+    *
+    * @param email
+    *   адрес электронной почты
+    * @param password
+    *   пароль
+    */
+  case class Credentials(email: String, password: String)
 
-  /** Ошибка аутентификации пользователя. */
-  case class AuthenticationError(message: String) extends HttpError
+  object Credentials:
+    given schema: Schema[Credentials] = DeriveSchema.gen
 
-  object AuthenticationError:
-    given schema: Schema[AuthenticationError] = DeriveSchema.gen
+  /** Токен аутентификации.
+    *
+    * @param jwt
+    *   JSON Web Token
+    */
+  case class Token(jwt: String)
 
-  /** Некорректный запрос. */
-  case class BadRequestError(message: String) extends HttpError
-
-  object BadRequestError:
-    given schema: Schema[BadRequestError] = DeriveSchema.gen
+  object Token:
+    given schema: Schema[Token] = DeriveSchema.gen
 
 end rest

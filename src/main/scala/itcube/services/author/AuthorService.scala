@@ -3,6 +3,7 @@ package itcube.services.author
 import itcube.entities.Author
 import itcube.repositories.author.AuthorRepository
 import itcube.services.*
+import itcube.utils.Errors.*
 import zio.ZIO
 
 /** Сервис авторов. */

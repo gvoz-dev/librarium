@@ -7,10 +7,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PW}
       - POSTGRES_DB=${POSTGRES_DB}
     ports:
-      - "5433:5433"
-    volumes:
-      - ./src/main/resources/db/pg-schema.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./postgres-data:/var/lib/postgresql/data
+      - "5432:5432"
     networks:
       custom_network:
         ipv4_address: 10.5.0.3

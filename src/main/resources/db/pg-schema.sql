@@ -1,13 +1,10 @@
---CREATE DATABASE libra;
---\connect libra
-
 -- Издательства
 CREATE TABLE IF NOT EXISTS "Publishers"
 (
     "id" uuid NOT NULL,
-    "name" character varying(50) NOT NULL,
-    "country" character varying(20) NOT NULL,
-    -- в будущем "страну" можно перенести в отдельную таблицу
+    "name" text NOT NULL,
+    "country" text NOT NULL,
+    -- в будущем можно перенести "страну" в отдельную таблицу
     -- в будущем можно добавить "описание" и "логотип" издателя
 
     CONSTRAINT "PublisherPK" PRIMARY KEY ("id")
@@ -17,9 +14,9 @@ CREATE TABLE IF NOT EXISTS "Publishers"
 CREATE TABLE IF NOT EXISTS "Authors"
 (
     "id" uuid NOT NULL,
-    "name" character varying(50) NOT NULL,
-    "country" character varying(20),
-    -- в будущем "страну" можно перенести в отдельную таблицу
+    "name" text NOT NULL,
+    "country" text,
+    -- в будущем можно перенести "страну" в отдельную таблицу
     -- в будущем можно добавить "биографию" и "портрет" автора
 
     CONSTRAINT "AuthorPK" PRIMARY KEY ("id")
@@ -29,15 +26,15 @@ CREATE TABLE IF NOT EXISTS "Authors"
 CREATE TABLE IF NOT EXISTS "Books"
 (
     "id" uuid NOT NULL,
-    "title" character varying(50) NOT NULL,
+    "title" text NOT NULL,
     "isbn" character varying(10),
     "isbn13" character varying(13),
-    "edition" character varying(20),
+    "edition" text,
     "year" integer,
     "pages" integer,
     "image" text,
     "description" text,
-    "language" character varying(20),
+    "language" text,
     "category" text,
     "publisherId" uuid,
     -- в будущем "язык" и "категорию(-ии)" можно перенести в отдельные таблицы
@@ -70,11 +67,11 @@ CREATE TABLE IF NOT EXISTS "BooksAuthors"
 CREATE TABLE IF NOT EXISTS "Users"
 (
     "id" uuid NOT NULL,
-    "name" character varying(50) NOT NULL,
-    "email" character varying(50) NOT NULL UNIQUE,
-    "password" character varying(50) NOT NULL,
-    "role" character varying(20) NOT NULL,
-    -- в будущем "роль" можно перенести в отдельную таблицу
+    "name" text NOT NULL,
+    "email" character varying(320) NOT NULL UNIQUE,
+    "password" text NOT NULL,
+    "role" text NOT NULL,
+    -- в будущем можно перенести "роль" в отдельную таблицу
 
     CONSTRAINT "UsersPK" PRIMARY KEY ("id")
 );
