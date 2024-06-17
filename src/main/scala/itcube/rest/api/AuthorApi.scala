@@ -94,10 +94,7 @@ object AuthorApi:
       .examplesIn(
         (
           "Add Harold Abelson",
-          (
-            "Replace this with the token from the login",
-            Author(scala.None, "Harold Abelson", Some("USA"))
-          )
+          ("", Author(scala.None, "Harold Abelson", Some("USA")))
         )
       )
       .out[Author](Doc.p("Created author"))

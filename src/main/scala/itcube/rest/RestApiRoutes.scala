@@ -1,6 +1,7 @@
 package itcube.rest
 
 import itcube.rest.api.*
+import zio.http.Middleware.*
 import zio.http.codec.*
 import zio.http.codec.PathCodec.*
 import zio.http.endpoint.openapi.*
@@ -27,7 +28,10 @@ object RestApiRoutes:
   private val swaggerRoutes =
     SwaggerUI.routes("docs" / "openapi", openAPI)
 
+  /** Конфигурация CORS. */
+  private val corsConfig: CorsConfig = CorsConfig()
+
   /** Маршруты API и сгенерированного SwaggerUI. */
-  def apply() = routes ++ swaggerRoutes
+  def apply() = (routes ++ swaggerRoutes) @@ cors(corsConfig)
 
 end RestApiRoutes

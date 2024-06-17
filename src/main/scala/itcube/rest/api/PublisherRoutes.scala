@@ -8,6 +8,7 @@ import zio.http.*
 import zio.schema.codec.JsonCodec.schemaBasedBinaryCodec
 
 /** API издателей. */
+@deprecated
 object PublisherRoutes {
   def apply(): Routes[PublisherRepository, Response] = {
     Routes(

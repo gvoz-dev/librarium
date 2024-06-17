@@ -12,7 +12,6 @@ object SecurityTest extends ZIOSpecDefault:
         for {
           hash1 <- hashPassword("12345")
           hash2 <- hashPassword("12345")
-          _ <- Console.printLine(hash1)
           isValid <- validatePassword("12345", hash1)
         } yield assertTrue(
           hash1 == hash2,
@@ -23,21 +22,17 @@ object SecurityTest extends ZIOSpecDefault:
         for {
           hash1 <- hashPassword("12345")
           hash2 <- hashPassword("qwe")
-          _ <- Console.printLine(hash1)
-          _ <- Console.printLine(hash2)
           isValid <- validatePassword("12345", hash1)
-          nonValid <- validatePassword("12345", hash2)
+          notValid <- validatePassword("12345", hash2)
         } yield assertTrue(
           hash1 != hash2,
           isValid,
-          !nonValid
+          !notValid
         )
       }
     )
 
   override def spec: Spec[TestEnvironment & Scope, Any] =
-    suite("Security tests")(
-      hashingPasswordsSpec
-    )
+    suite("Security tests")(hashingPasswordsSpec)
 
 end SecurityTest

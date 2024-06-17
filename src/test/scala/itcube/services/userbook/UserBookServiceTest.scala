@@ -1,20 +1,18 @@
-package itcube.repositories.userbook
+package itcube.services.userbook
 
 import io.github.scottweaver.zio.aspect.DbMigrationAspect
 import io.github.scottweaver.zio.testcontainers.postgres.ZPostgreSQLContainer
-import itcube.LibraPostgresContainer
-import itcube.repositories.RepoLayers
-import itcube.services.userbook.UserBookService
+import itcube.*
 import zio.Scope
 import zio.test.*
 import zio.test.TestAspect.*
 
 import java.util.UUID
 
-object UserBookRepositoryTest extends ZIOSpecDefault:
+object UserBookServiceTest extends ZIOSpecDefault:
 
-  private def userBookRepoSpec =
-    suite("UserBook repository/service functions")(
+  private def userBookServiceSpec =
+    suite("UserBook service & repo functions")(
       test("#findUserBook should return id") {
         for {
           id <- UserBookService.findUserBook(
@@ -105,13 +103,13 @@ object UserBookRepositoryTest extends ZIOSpecDefault:
     )
 
   override def spec: Spec[TestEnvironment & Scope, Any] =
-    (suite("UserBook repository/service")(
-      userBookRepoSpec
+    (suite("UserBook service & repo tests")(
+      userBookServiceSpec
     ) @@ DbMigrationAspect.migrate("db/migration")() @@ sequential)
       .provideShared(
         LibraPostgresContainer.live,
         ZPostgreSQLContainer.live,
-        RepoLayers.userBookRepoLayer
+        TestRepoLayers.userBookRepoLayer
       )
 
-end UserBookRepositoryTest
+end UserBookServiceTest

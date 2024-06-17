@@ -1,12 +1,11 @@
-package itcube.repositories.author
+package itcube.services.author
 
 import io.github.scottweaver.zio.aspect.DbMigrationAspect
 import io.github.scottweaver.zio.testcontainers.postgres.ZPostgreSQLContainer
-import itcube.LibraPostgresContainer
+import itcube.*
 import itcube.entities.Author
-import itcube.repositories.RepoLayers
+import itcube.repositories.author.AuthorRepository
 import itcube.services.*
-import itcube.services.author.AuthorService
 import itcube.utils.Errors.*
 import zio.*
 import zio.test.*
@@ -15,14 +14,13 @@ import zio.test.TestAspect.*
 
 import java.util.UUID
 
-object AuthorRepositoryTest extends ZIOSpecDefault:
+object AuthorServiceTest extends ZIOSpecDefault:
 
-  private def authorRepoSpec: Spec[AuthorRepository, Throwable | ServiceError] =
-    suite("Author repository/service functions")(
+  private def authorServiceSpec =
+    suite("Author service & repo functions")(
       test("#all should return 3 authors") {
         for {
           authors <- AuthorService.all
-          _ <- Console.printLine(authors)
         } yield assertTrue(
           authors.nonEmpty,
           authors.size == 3
@@ -33,7 +31,6 @@ object AuthorRepositoryTest extends ZIOSpecDefault:
           author <- AuthorService.findById(
             "0584125f-74e9-4b2b-92e2-e7396803aaba"
           )
-          _ <- Console.printLine(author)
         } yield assertTrue(
           author.name == "Donald Knuth"
         )
@@ -50,7 +47,6 @@ object AuthorRepositoryTest extends ZIOSpecDefault:
       test("#findByName should return the author if it exists") {
         for {
           author <- AuthorService.findByName("Martin Odersky")
-          _ <- Console.printLine(author)
         } yield assertTrue(
           author.nonEmpty,
           author.head.id.contains(
@@ -63,34 +59,30 @@ object AuthorRepositoryTest extends ZIOSpecDefault:
           result <- AuthorService.findByName("Frank Herbert").exit
         } yield assert(result)(fails(isSubtype[ServiceError](anything)))
       },
-      test("#create author") {
+      test("#create author is correct") {
         val author = Author(None, "Gvozdev Roman", Some("Russia"))
         for {
           inserted <- AuthorService.create(author)
-          _ <- Console.printLine(inserted)
           selected <- AuthorService.findByName("Gvozdev Roman")
-          _ <- Console.printLine(selected)
         } yield assertTrue(
           selected.nonEmpty,
           selected.head.id == inserted.id
         )
       },
-      test("#update author") {
+      test("#update author is correct") {
         val uuid = UUID.fromString("7a7713e0-a518-4e3a-bf8f-bc984150a3b4")
         val author = Author(Some(uuid), "Martin Odersky", Some("Switzerland"))
         for {
           updated <- AuthorService.update(author)
           selected <- AuthorService.findByName("Martin Odersky")
-          _ <- Console.printLine(selected)
         } yield assertTrue(
           selected.nonEmpty,
           selected.head.country.contains("Switzerland")
         )
       },
-      test("#delete author") {
+      test("#delete author is correct") {
         for {
           author <- AuthorService.findByName("Gvozdev Roman")
-          _ <- Console.printLine(author)
           _ <- AuthorService.delete(author.head.id.map(_.toString).get)
           result <- AuthorService.findByName("Gvozdev Roman").exit
         } yield assert(result)(fails(isSubtype[ServiceError](anything)))
@@ -98,13 +90,13 @@ object AuthorRepositoryTest extends ZIOSpecDefault:
     )
 
   override def spec: Spec[TestEnvironment & Scope, Any] =
-    (suite("Author repository/service")(
-      authorRepoSpec
+    (suite("Author service & repo tests")(
+      authorServiceSpec
     ) @@ DbMigrationAspect.migrate("db/migration")() @@ sequential)
       .provideShared(
         LibraPostgresContainer.live,
         ZPostgreSQLContainer.live,
-        RepoLayers.authorRepoLayer
+        TestRepoLayers.authorRepoLayer
       )
 
-end AuthorRepositoryTest
+end AuthorServiceTest

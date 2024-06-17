@@ -8,6 +8,7 @@ import zio.http.*
 import zio.schema.codec.JsonCodec.schemaBasedBinaryCodec
 
 /** API пользователей. */
+@deprecated
 object UserRoutes {
   def apply(): Routes[UserRepository, Response] = {
     Routes(

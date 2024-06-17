@@ -1,27 +1,25 @@
-package itcube.repositories.comment
+package itcube.services.comment
 
 import io.github.scottweaver.zio.aspect.DbMigrationAspect
 import io.github.scottweaver.zio.testcontainers.postgres.ZPostgreSQLContainer
-import itcube.LibraPostgresContainer
+import itcube.*
 import itcube.entities.Comment
-import itcube.repositories.RepoLayers
-import itcube.services.comment.CommentService
+import itcube.repositories.comment.CommentRepository
 import zio.*
 import zio.test.*
 import zio.test.TestAspect.*
 
 import java.util.UUID
 
-object CommentRepositoryTest extends ZIOSpecDefault:
+object CommentServiceTest extends ZIOSpecDefault:
 
-  private def commentRepoSpec: Spec[CommentRepository, Throwable] =
-    suite("Comment repository/service functions")(
+  private def commentServiceSpec =
+    suite("Comment service & repo functions")(
       test("#findById should return comment if it exists") {
         for {
           comment <- CommentService.findById(
             "3bde6a1f-3eb7-4f36-b4c0-422ab4f39e99"
           )
-          _ <- Console.printLine(comment)
         } yield assertTrue(
           comment.isDefined,
           comment.exists(_.text == "Отличная книга, рекомендую!")
@@ -32,7 +30,6 @@ object CommentRepositoryTest extends ZIOSpecDefault:
           comments <- CommentService.findByUser(
             "ca3e509d-06cf-4655-802a-7f8355339e2c"
           )
-          _ <- Console.printLine(comments)
         } yield assertTrue(
           comments.size == 1,
           comments.head.text == "Отличная книга, рекомендую!"
@@ -43,7 +40,6 @@ object CommentRepositoryTest extends ZIOSpecDefault:
           comments <- CommentService.findByUser(
             "37d706ed-9591-4fd3-8811-9970194347da"
           )
-          _ <- Console.printLine(comments)
         } yield assertTrue(
           comments.isEmpty
         )
@@ -53,7 +49,6 @@ object CommentRepositoryTest extends ZIOSpecDefault:
           comments <- CommentService.findByBook(
             "b43e5b87-a042-461b-8728-653eddced002"
           )
-          _ <- Console.printLine(comments)
         } yield assertTrue(
           comments.size == 1,
           comments.head.text == "Отличная книга, рекомендую!"
@@ -64,7 +59,6 @@ object CommentRepositoryTest extends ZIOSpecDefault:
           comments <- CommentService.findByBook(
             "eb98fd47-793e-448c-ad50-0a68d1f76252"
           )
-          _ <- Console.printLine(comments)
         } yield assertTrue(
           comments.isEmpty
         )
@@ -75,7 +69,6 @@ object CommentRepositoryTest extends ZIOSpecDefault:
             "ca3e509d-06cf-4655-802a-7f8355339e2c",
             "b43e5b87-a042-461b-8728-653eddced002"
           )
-          _ <- Console.printLine(comments)
         } yield assertTrue(
           comments.size == 1,
           comments.head.text == "Отличная книга, рекомендую!"
@@ -87,12 +80,11 @@ object CommentRepositoryTest extends ZIOSpecDefault:
             "ea962bb3-8f66-4256-bea5-8851c8f37dfb",
             "eb98fd47-793e-448c-ad50-0a68d1f76252"
           )
-          _ <- Console.printLine(comments)
         } yield assertTrue(
           comments.isEmpty
         )
       },
-      test("#create comment") {
+      test("#create comment is correct") {
         val comment = Comment(None, "test comment", true, None)
         for {
           inserted <- CommentService.create(
@@ -100,18 +92,16 @@ object CommentRepositoryTest extends ZIOSpecDefault:
             "ea962bb3-8f66-4256-bea5-8851c8f37dfb",
             "eb98fd47-793e-448c-ad50-0a68d1f76252"
           )
-          _ <- Console.printLine(inserted)
           selected <- CommentService.findByUserAndBook(
             "ea962bb3-8f66-4256-bea5-8851c8f37dfb",
             "eb98fd47-793e-448c-ad50-0a68d1f76252"
           )
-          _ <- Console.printLine(selected)
         } yield assertTrue(
           selected.size == 1,
           selected.head == inserted
         )
       },
-      test("#update comment") {
+      test("#update comment is correct") {
         val uuid = UUID.fromString("3bde6a1f-3eb7-4f36-b4c0-422ab4f39e99")
         val comment = Comment(Some(uuid), "test", false, None)
         for {
@@ -120,13 +110,12 @@ object CommentRepositoryTest extends ZIOSpecDefault:
             "ca3e509d-06cf-4655-802a-7f8355339e2c",
             "b43e5b87-a042-461b-8728-653eddced002"
           )
-          _ <- Console.printLine(selected)
         } yield assertTrue(
           selected.nonEmpty,
           selected.head == updated
         )
       },
-      test("#delete comment") {
+      test("#delete comment is correct") {
         for {
           _ <- CommentService.delete("3bde6a1f-3eb7-4f36-b4c0-422ab4f39e99")
           deleted <- CommentService.findByUserAndBook(
@@ -140,13 +129,13 @@ object CommentRepositoryTest extends ZIOSpecDefault:
     )
 
   override def spec: Spec[TestEnvironment & Scope, Any] =
-    (suite("Comment repository/service")(
-      commentRepoSpec
+    (suite("Comment service & repo tests")(
+      commentServiceSpec
     ) @@ DbMigrationAspect.migrate("db/migration")() @@ sequential)
       .provideShared(
         LibraPostgresContainer.live,
         ZPostgreSQLContainer.live,
-        RepoLayers.commentRepoLayer
+        TestRepoLayers.commentRepoLayer
       )
 
-end CommentRepositoryTest
+end CommentServiceTest

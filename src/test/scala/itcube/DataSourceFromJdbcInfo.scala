@@ -1,4 +1,4 @@
-package itcube.repositories
+package itcube
 
 import io.github.scottweaver.models.JdbcInfo
 import org.postgresql.ds.PGSimpleDataSource

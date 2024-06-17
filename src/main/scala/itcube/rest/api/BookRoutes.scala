@@ -10,6 +10,7 @@ import zio.http.*
 import zio.schema.codec.JsonCodec.schemaBasedBinaryCodec
 
 /** API книг. */
+@deprecated
 object BookRoutes {
   def apply(): Routes[BookRepository & CommentRepository, Response] = {
     Routes(

@@ -22,7 +22,7 @@ package object repositories:
   /** Quill JDBC-контекст для СУБД PostgreSQL. */
   object PostgresContext extends PostgresZioJdbcContext(Escape)
 
-  // Data-классы записей в таблицах БД (см. db/pg-schema.sql):
+  // Data-классы записей в таблицах БД (см. db/migration/V1_00__init.sql):
 
   /** Запись (строка) в таблице "Издатели".
     *
