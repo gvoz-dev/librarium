@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS "Users"
     "email" character varying(320) NOT NULL UNIQUE,
     "password" text NOT NULL,
     "role" text NOT NULL,
+    -- в будущем можно добавить "аватар" пользователя
     -- в будущем можно перенести "роль" в отдельную таблицу
 
     CONSTRAINT "UsersPK" PRIMARY KEY ("id")
