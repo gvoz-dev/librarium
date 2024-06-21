@@ -42,7 +42,7 @@ object UserServiceTest extends ZIOSpecDefault:
               "37d706ed-9591-4fd3-8811-9970194347da"
             )
             .exit
-        } yield assert(result)(fails(isSubtype[NotFoundError](anything)))
+        } yield assert(result)(fails(isSubtype[NotFound](anything)))
       },
       test("#findByEmail should return the user if it exists") {
         for {
@@ -54,7 +54,7 @@ object UserServiceTest extends ZIOSpecDefault:
       test("#findByEmail should fail if the user does not exist") {
         for {
           result <- UserService.findByEmail("adm1n@example.com").exit
-        } yield assert(result)(fails(isSubtype[NotFoundError](anything)))
+        } yield assert(result)(fails(isSubtype[NotFound](anything)))
       },
       test("#findByName should return the user if it exists") {
         for {
@@ -68,7 +68,7 @@ object UserServiceTest extends ZIOSpecDefault:
       test("#findByName should fail if the user does not exist") {
         for {
           result <- UserService.findByName("tester").exit
-        } yield assert(result)(fails(isSubtype[NotFoundError](anything)))
+        } yield assert(result)(fails(isSubtype[NotFound](anything)))
       },
       test("#create user is correct") {
         val user = User(None, "tester", "tester@example.com", "test", "user")
@@ -97,7 +97,7 @@ object UserServiceTest extends ZIOSpecDefault:
           users <- UserService.findByName("tester")
           _ <- UserService.delete(users.head.id.map(_.toString).get)
           result <- UserService.findByName("tester").exit
-        } yield assert(result)(fails(isSubtype[NotFoundError](anything)))
+        } yield assert(result)(fails(isSubtype[NotFound](anything)))
       }
     )
 

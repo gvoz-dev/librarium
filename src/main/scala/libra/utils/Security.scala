@@ -34,7 +34,7 @@ object Security:
     *   массив байт
     */
   private def bytesToHexString(bytes: Array[Byte]): String =
-    bytes.foldLeft("")((acc, b) => acc + String.format("%02x", Byte.box(b)))
+    bytes.foldLeft("")((acc, b) => acc + String.format("%02x", b))
 
   /** Произвести валидацию пароля.
     *
@@ -45,5 +45,16 @@ object Security:
     */
   def validatePassword(password: String, hash: String): UIO[Boolean] =
     hashPassword(password).map(_ == hash)
+
+  /** Произвести валидацию адреса электронной почты.
+    *
+    * @param email
+    *   адрес электронной почты
+    */
+  def validateEmail(email: String): UIO[Boolean] =
+    ZIO.succeed {
+      // TODO: написать нормальную реализацию с использованием регулярок
+      email.contains("@")
+    }
 
 end Security

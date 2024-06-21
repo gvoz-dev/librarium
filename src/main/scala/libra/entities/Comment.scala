@@ -1,6 +1,7 @@
 package libra.entities
 
 import zio.schema.*
+import zio.schema.annotation.*
 
 import java.time.LocalDateTime
 import java.util.UUID
@@ -17,16 +18,21 @@ import java.util.UUID
   *   дата и время комментария
   */
 final case class Comment(
+    @optionalField
+    @description("Comment ID")
     id: Option[UUID],
+    @description("Comment text")
     text: String,
+    @description("Is the comment private?")
     isPrivate: Boolean,
+    @optionalField
+    @description("Date of comment")
     date: Option[LocalDateTime]
 )
 
 object Comment:
 
-  /** Гивен ZIO-схемы комментария. Выводится в автоматическом режиме.
-    */
-  given commentSchema: Schema[Comment] = DeriveSchema.gen[Comment]
+  /** Гивен ZIO-схемы комментария. */
+  given Schema[Comment] = DeriveSchema.gen
 
 end Comment

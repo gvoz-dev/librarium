@@ -7,24 +7,37 @@ sealed trait ServiceError
 
 object ServiceError:
 
-  /** Ошибка базы данных. */
-  final case class DatabaseError(message: String = "Database error")
-      extends ServiceError
+  /** HTTP 500. */
+  final case class InternalServerError(
+      message: String = "Internal Server Error"
+  ) extends ServiceError
 
-  /** Данные не найдены. */
-  final case class NotFoundError(message: String = "Not found")
-      extends ServiceError
+  /** HTTP 404. */
+  final case class NotFound(
+      message: String = "Not Found"
+  ) extends ServiceError
 
-  /** Ошибка репозитория. */
-  type RepositoryError = DatabaseError | NotFoundError
+  /** HTTP 401. */
+  final case class Unauthorized(
+      message: String = "Unauthorized"
+  ) extends ServiceError
 
-  /** Ошибка аутентификации. */
-  final case class AuthenticationError(message: String = "Authentication error")
-      extends ServiceError
+  /** HTTP 400. */
+  final case class BadRequest(
+      message: String = "Bad Request"
+  ) extends ServiceError
+
+  /** Тип-сумма ошибок репозитория. */
+  type RepositoryError = InternalServerError | NotFound
+
+  /** Тип-сумма ошибок клиента. */
+  type ClientError = NotFound | Unauthorized | BadRequest
 
   /** Гивены ZIO-схем ошибок сервиса. */
-  given Schema[ServiceError.DatabaseError] = DeriveSchema.gen
-  given Schema[ServiceError.NotFoundError] = DeriveSchema.gen
-  given Schema[ServiceError.AuthenticationError] = DeriveSchema.gen
+  given Schema[ServiceError] = DeriveSchema.gen
+  given Schema[ServiceError.InternalServerError] = DeriveSchema.gen
+  given Schema[ServiceError.NotFound] = DeriveSchema.gen
+  given Schema[ServiceError.Unauthorized] = DeriveSchema.gen
+  given Schema[ServiceError.BadRequest] = DeriveSchema.gen
 
 end ServiceError

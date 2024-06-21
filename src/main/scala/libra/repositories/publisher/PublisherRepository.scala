@@ -9,19 +9,19 @@ trait PublisherRepository:
   /** Получить всех издателей. */
   def all: Task[List[Publisher]]
 
-  /** Получить издателя по ID.
+  /** Найти издателя по ID.
     *
     * @param id
     *   уникальный идентификатор издателя (строка UUID).
     */
   def findById(id: String): Task[Option[Publisher]]
 
-  /** Получить издателя по названию.
+  /** Найти издателей по названию.
     *
     * @param name
     *   название издателя
     */
-  def findByName(name: String): Task[Option[Publisher]]
+  def findByName(name: String): Task[List[Publisher]]
 
   /** Создать издателя.
     *

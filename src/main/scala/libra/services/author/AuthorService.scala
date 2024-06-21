@@ -13,10 +13,10 @@ object AuthorService:
   def all: ZIO[AuthorRepository, RepositoryError, List[Author]] =
     ZIO
       .serviceWithZIO[AuthorRepository](_.all)
-      .mapError(e => DatabaseError(e.getMessage))
-      .onError(e => ZIO.logError(s"Database error:\n${e.prettyPrint}"))
+      .mapError(e => InternalServerError(e.getMessage))
+      .onError(e => ZIO.logError(s"Error:\n${e.prettyPrint}"))
       .flatMap {
-        case Nil  => ZIO.fail(NotFoundError("Authors not found"))
+        case Nil  => ZIO.fail(NotFound("Authors not found"))
         case list => ZIO.succeed(list)
       }
 
@@ -30,10 +30,10 @@ object AuthorService:
   ): ZIO[AuthorRepository, RepositoryError, Author] =
     ZIO
       .serviceWithZIO[AuthorRepository](_.findById(id))
-      .mapError(e => DatabaseError(e.getMessage))
-      .onError(e => ZIO.logError(s"Database error:\n${e.prettyPrint}"))
+      .mapError(e => InternalServerError(e.getMessage))
+      .onError(e => ZIO.logError(s"Error:\n${e.prettyPrint}"))
       .flatMap {
-        case None => ZIO.fail(NotFoundError(s"Author not found by ID: $id"))
+        case None         => ZIO.fail(NotFound(s"Author not found by ID: $id"))
         case Some(author) => ZIO.succeed(author)
       }
 
@@ -47,10 +47,10 @@ object AuthorService:
   ): ZIO[AuthorRepository, RepositoryError, List[Author]] =
     ZIO
       .serviceWithZIO[AuthorRepository](_.findByName(name))
-      .mapError(e => DatabaseError(e.getMessage))
-      .onError(e => ZIO.logError(s"Database error:\n${e.prettyPrint}"))
+      .mapError(e => InternalServerError(e.getMessage))
+      .onError(e => ZIO.logError(s"Error:\n${e.prettyPrint}"))
       .flatMap {
-        case Nil => ZIO.fail(NotFoundError(s"Authors not found by name: $name"))
+        case Nil  => ZIO.fail(NotFound(s"Authors not found by name: $name"))
         case list => ZIO.succeed(list)
       }
 
@@ -61,15 +61,13 @@ object AuthorService:
     */
   def create(
       author: Author
-  ): ZIO[AuthorRepository, DatabaseError, Author] =
+  ): ZIO[AuthorRepository, InternalServerError, Author] =
     for {
       result <- ZIO
         .serviceWithZIO[AuthorRepository](_.create(author))
-        .mapError(e => DatabaseError(e.getMessage))
-        .onError(e =>
-          ZIO.logError(s"Author $author not created:\n${e.prettyPrint}")
-        )
-      _ <- ZIO.logInfo(s"Author $result created")
+        .mapError(e => InternalServerError(e.getMessage))
+        .onError(e => ZIO.logError(s"$author not created:\n${e.prettyPrint}"))
+      _ <- ZIO.logInfo(s"$result created")
     } yield result
 
   /** Изменить автора.
@@ -79,15 +77,13 @@ object AuthorService:
     */
   def update(
       author: Author
-  ): ZIO[AuthorRepository, DatabaseError, Author] =
+  ): ZIO[AuthorRepository, InternalServerError, Author] =
     for {
       result <- ZIO
         .serviceWithZIO[AuthorRepository](_.update(author))
-        .mapError(e => DatabaseError(e.getMessage))
-        .onError(e =>
-          ZIO.logError(s"Author $author not updated:\n${e.prettyPrint}")
-        )
-      _ <- ZIO.logInfo(s"Author $result updated")
+        .mapError(e => InternalServerError(e.getMessage))
+        .onError(e => ZIO.logError(s"$author not updated:\n${e.prettyPrint}"))
+      _ <- ZIO.logInfo(s"$result updated")
     } yield result
 
   /** Удалить автора.
@@ -97,11 +93,11 @@ object AuthorService:
     */
   def delete(
       id: String
-  ): ZIO[AuthorRepository, DatabaseError, Unit] =
+  ): ZIO[AuthorRepository, InternalServerError, Unit] =
     for {
       _ <- ZIO
         .serviceWithZIO[AuthorRepository](_.delete(id))
-        .mapError(e => DatabaseError(e.getMessage))
+        .mapError(e => InternalServerError(e.getMessage))
         .onError(e =>
           ZIO.logError(s"Author ($id) not deleted:\n${e.prettyPrint}")
         )

@@ -88,7 +88,7 @@ case class PgBookRepository(ds: DataSource) extends BookRepository:
     }.provide(dsLayer)
   end all
 
-  /** Получить книгу по ID.
+  /** Найти книгу по ID.
     *
     * @param id
     *   уникальный идентификатор книги (строка UUID).
@@ -113,12 +113,12 @@ case class PgBookRepository(ds: DataSource) extends BookRepository:
     } yield result
   end findById
 
-  /** Получить книгу по названию.
+  /** Найти книги по названию.
     *
     * @param title
     *   название книги
     */
-  override def findByTitle(title: String): Task[Option[Book]] =
+  override def findByTitle(title: String): Task[List[Book]] =
     run {
       quote {
         for {
@@ -132,7 +132,7 @@ case class PgBookRepository(ds: DataSource) extends BookRepository:
             .leftJoin(a => booksAuthors.exists(ba => ba.authorId == a.id))
         } yield (books, publishers, authors)
       }.map(toBook)
-    }.map(_.headOption).provide(dsLayer)
+    }.provide(dsLayer)
   end findByTitle
 
   /** Создать книгу.

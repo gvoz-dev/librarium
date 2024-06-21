@@ -6,7 +6,6 @@ import libra.*
 import libra.entities.Author
 import libra.repositories.author.AuthorRepository
 import libra.services.*
-import libra.utils.ServiceError
 import libra.utils.ServiceError.*
 import zio.*
 import zio.test.*
@@ -43,7 +42,7 @@ object AuthorServiceTest extends ZIOSpecDefault:
               "37d706ed-9591-4fd3-8811-9970194347da"
             )
             .exit
-        } yield assert(result)(fails(isSubtype[NotFoundError](anything)))
+        } yield assert(result)(fails(isSubtype[NotFound](anything)))
       },
       test("#findByName should return the author if it exists") {
         for {
@@ -58,7 +57,7 @@ object AuthorServiceTest extends ZIOSpecDefault:
       test("#findByName should fail if the author does not exist") {
         for {
           result <- AuthorService.findByName("Frank Herbert").exit
-        } yield assert(result)(fails(isSubtype[ServiceError](anything)))
+        } yield assert(result)(fails(isSubtype[NotFound](anything)))
       },
       test("#create author is correct") {
         val author = Author(None, "Gvozdev Roman", Some("Russia"))
@@ -86,7 +85,7 @@ object AuthorServiceTest extends ZIOSpecDefault:
           authors <- AuthorService.findByName("Gvozdev Roman")
           _ <- AuthorService.delete(authors.head.id.map(_.toString).get)
           result <- AuthorService.findByName("Gvozdev Roman").exit
-        } yield assert(result)(fails(isSubtype[ServiceError](anything)))
+        } yield assert(result)(fails(isSubtype[NotFound](anything)))
       }
     )
 

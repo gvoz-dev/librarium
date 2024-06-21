@@ -5,8 +5,10 @@ import io.github.scottweaver.zio.testcontainers.postgres.ZPostgreSQLContainer
 import libra.*
 import libra.entities.Publisher
 import libra.repositories.publisher.PublisherRepository
+import libra.utils.ServiceError.*
 import zio.*
 import zio.test.*
+import zio.test.Assertion.*
 import zio.test.TestAspect.*
 
 import java.util.UUID
@@ -29,35 +31,32 @@ object PublisherServiceTest extends ZIOSpecDefault:
             "b43e5b87-a042-461b-8728-653eddced002"
           )
         } yield assertTrue(
-          publisher.isDefined,
-          publisher.get.name == "Addison-Wesley"
+          publisher.name == "Addison-Wesley"
         )
       },
-      test("#findById should return none if the publisher does not exist") {
+      test("#findById should fail if the publisher does not exist") {
         for {
-          publisher <- PublisherService.findById(
-            "7a7713e0-a518-4e3a-bf8f-bc984150a3b4"
-          )
-        } yield assertTrue(
-          publisher.isEmpty
-        )
+          result <- PublisherService
+            .findById(
+              "7a7713e0-a518-4e3a-bf8f-bc984150a3b4"
+            )
+            .exit
+        } yield assert(result)(fails(isSubtype[NotFound](anything)))
       },
       test("#findByName should return the publisher if it exists") {
         for {
-          publisher <- PublisherService.findByName("Artima")
+          publishers <- PublisherService.findByName("Artima")
         } yield assertTrue(
-          publisher.isDefined,
-          publisher.get.id.contains(
+          publishers.nonEmpty,
+          publishers.head.id.contains(
             UUID.fromString("37d706ed-9591-4fd3-8811-9970194347da")
           )
         )
       },
-      test("#findByName should return none if the publisher does not exist") {
+      test("#findByName should fail if the publisher does not exist") {
         for {
-          publisher <- PublisherService.findByName("Manning")
-        } yield assertTrue(
-          publisher.isEmpty
-        )
+          result <- PublisherService.findByName("Manning").exit
+        } yield assert(result)(fails(isSubtype[NotFound](anything)))
       },
       test("#create publisher is correct") {
         val publisher = Publisher(None, "Manning", "USA")
@@ -65,8 +64,8 @@ object PublisherServiceTest extends ZIOSpecDefault:
           inserted <- PublisherService.create(publisher)
           selected <- PublisherService.findByName("Manning")
         } yield assertTrue(
-          selected.isDefined,
-          selected.get.id == inserted.id
+          selected.nonEmpty,
+          selected.head.id == inserted.id
         )
       },
       test("#update publisher is correct") {
@@ -76,19 +75,16 @@ object PublisherServiceTest extends ZIOSpecDefault:
           updated <- PublisherService.update(publisher)
           selected <- PublisherService.findByName("Science")
         } yield assertTrue(
-          selected.isDefined,
-          selected.get.name == "Science"
+          selected.nonEmpty,
+          selected.head.name == "Science"
         )
       },
       test("#delete publisher is correct") {
         for {
           publisher <- PublisherService.findByName("Manning")
-          _ <- PublisherService.delete(publisher.get.id.map(_.toString).get)
-          deleted <- PublisherService.findByName("Manning")
-        } yield assertTrue(
-          publisher.isDefined,
-          deleted.isEmpty
-        )
+          _ <- PublisherService.delete(publisher.head.id.map(_.toString).get)
+          result <- PublisherService.findByName("Manning").exit
+        } yield assert(result)(fails(isSubtype[NotFound](anything)))
       }
     )
 

@@ -11,7 +11,7 @@ import scala.util.Try
 /** Операции с JSON Web Token. */
 object JsonWebToken:
 
-  given clock: java.time.Clock = java.time.Clock.systemUTC()
+  given java.time.Clock = java.time.Clock.systemUTC()
 
   /** Закодировать JWT.
     *
@@ -55,20 +55,20 @@ object JsonWebToken:
   def validateJwt(
       token: String,
       secretKey: String
-  ): ZIO[Any, AuthenticationError, Claim] =
+  ): ZIO[Any, Unauthorized, Payload] =
     ZIO
       .fromTry(decodeJwt(token, secretKey))
-      .orElseFail(AuthenticationError("Invalid or expired token!"))
+      .orElseFail(Unauthorized("Invalid or expired token!"))
       .flatMap(claim =>
         for {
           subject <- ZIO
             .fromOption(claim.subject)
-            .orElseFail(AuthenticationError("Missing subject claim!"))
+            .orElseFail(Unauthorized("Missing subject claim!"))
           content <- ZIO
-            .fromEither(claim.content.fromJson[ClaimContent])
+            .fromEither(claim.content.fromJson[PayloadContent])
             .onError(e => ZIO.logError(e.prettyPrint))
-            .orElseFail(AuthenticationError("Missing content!"))
-        } yield Claim(subject, content)
+            .orElseFail(Unauthorized("Missing content!"))
+        } yield Payload(subject, content)
       )
   end validateJwt
 
@@ -79,28 +79,28 @@ object JsonWebToken:
     * @param content
     *   дополнительный контент (роль пользователя, ?)
     */
-  final case class Claim(subject: String, content: ClaimContent)
+  final case class Payload(subject: String, content: PayloadContent)
 
   /** Дополнительный контент в полезной нагрузке токена.
     *
     * @param role
     *   роль пользователя
     */
-  final case class ClaimContent(role: String)
+  final case class PayloadContent(role: String)
 
   /** Автоматический вывод JSON-декодера для дополнительного контента токена. */
-  given JsonDecoder[ClaimContent] = DeriveJsonDecoder.gen
+  given JsonDecoder[PayloadContent] = DeriveJsonDecoder.gen
 
   /** Проверить права токена на доступ к ресурсу.
     *
     * Функция возвращает true, если права есть.
     *
-    * @param claim
+    * @param payload
     *   полезная нагрузка токена
     * @param ownerId
     *   идентификатор владельца ресурса
     */
-  def checkTokenPermissions(claim: Claim, ownerId: String): Boolean =
-    claim.subject == ownerId || claim.content.role == "admin"
+  def checkTokenPermissions(payload: Payload, ownerId: String): Boolean =
+    payload.subject == ownerId || payload.content.role == "admin"
 
 end JsonWebToken

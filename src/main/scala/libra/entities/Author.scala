@@ -16,7 +16,7 @@ import java.util.UUID
   */
 final case class Author(
     @optionalField
-    @description("Author's ID")
+    @description("Author ID")
     id: Option[UUID],
     @description("Author's name")
     name: String,

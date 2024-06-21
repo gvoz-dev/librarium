@@ -29,10 +29,10 @@ object JsonWebTokenTest extends ZIOSpecDefault:
       },
       test("#checkTokenPermissions is correct") {
         for {
-          userClaim <- ZIO.succeed(Claim("123", ClaimContent("user")))
+          userClaim <- ZIO.succeed(Payload("123", PayloadContent("user")))
           permitted <- ZIO.succeed(checkTokenPermissions(userClaim, "123"))
           notPermitted <- ZIO.succeed(checkTokenPermissions(userClaim, "789"))
-          adminClaim <- ZIO.succeed(Claim("456", ClaimContent("admin")))
+          adminClaim <- ZIO.succeed(Payload("456", PayloadContent("admin")))
           adminIsPermitted <- ZIO.succeed(
             checkTokenPermissions(adminClaim, "789")
           )

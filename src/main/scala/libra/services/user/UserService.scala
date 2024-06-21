@@ -12,10 +12,10 @@ object UserService:
   def all: ZIO[UserRepository, RepositoryError, List[User]] =
     ZIO
       .serviceWithZIO[UserRepository](_.all)
-      .mapError(e => DatabaseError(e.getMessage))
-      .onError(e => ZIO.logError(s"Database error:\n${e.prettyPrint}"))
+      .mapError(e => InternalServerError(e.getMessage))
+      .onError(e => ZIO.logError(s"Error:\n${e.prettyPrint}"))
       .flatMap {
-        case Nil  => ZIO.fail(NotFoundError("Users not found"))
+        case Nil  => ZIO.fail(NotFound("Users not found"))
         case list => ZIO.succeed(list)
       }
 
@@ -29,10 +29,10 @@ object UserService:
   ): ZIO[UserRepository, RepositoryError, User] =
     ZIO
       .serviceWithZIO[UserRepository](_.findById(id))
-      .mapError(e => DatabaseError(e.getMessage))
-      .onError(e => ZIO.logError(s"Database error:\n${e.prettyPrint}"))
+      .mapError(e => InternalServerError(e.getMessage))
+      .onError(e => ZIO.logError(s"Error:\n${e.prettyPrint}"))
       .flatMap {
-        case None       => ZIO.fail(NotFoundError(s"User not found by ID: $id"))
+        case None       => ZIO.fail(NotFound(s"User not found by ID: $id"))
         case Some(user) => ZIO.succeed(user)
       }
 
@@ -46,10 +46,10 @@ object UserService:
   ): ZIO[UserRepository, RepositoryError, User] =
     ZIO
       .serviceWithZIO[UserRepository](_.findByEmail(email))
-      .mapError(e => DatabaseError(e.getMessage))
-      .onError(e => ZIO.logError(s"Database error:\n${e.prettyPrint}"))
+      .mapError(e => InternalServerError(e.getMessage))
+      .onError(e => ZIO.logError(s"Error:\n${e.prettyPrint}"))
       .flatMap {
-        case None => ZIO.fail(NotFoundError(s"User not found by email: $email"))
+        case None => ZIO.fail(NotFound(s"User not found by email: $email"))
         case Some(user) => ZIO.succeed(user)
       }
 
@@ -63,10 +63,10 @@ object UserService:
   ): ZIO[UserRepository, RepositoryError, List[User]] =
     ZIO
       .serviceWithZIO[UserRepository](_.findByName(name))
-      .mapError(e => DatabaseError(e.getMessage))
+      .mapError(e => InternalServerError(e.getMessage))
       .onError(e => ZIO.logError(s"Database error:\n${e.prettyPrint}"))
       .flatMap {
-        case Nil  => ZIO.fail(NotFoundError(s"Users not found by name: $name"))
+        case Nil  => ZIO.fail(NotFound(s"Users not found by name: $name"))
         case list => ZIO.succeed(list)
       }
 
@@ -77,15 +77,13 @@ object UserService:
     */
   def create(
       user: User
-  ): ZIO[UserRepository, DatabaseError, User] =
+  ): ZIO[UserRepository, InternalServerError, User] =
     for {
       result <- ZIO
         .serviceWithZIO[UserRepository](_.create(user))
-        .mapError(e => DatabaseError(e.getMessage))
-        .onError(e =>
-          ZIO.logError(s"User $user not created:\n${e.prettyPrint}")
-        )
-      _ <- ZIO.logInfo(s"User $result created")
+        .mapError(e => InternalServerError(e.getMessage))
+        .onError(e => ZIO.logError(s"$user not created:\n${e.prettyPrint}"))
+      _ <- ZIO.logInfo(s"$result created")
     } yield result
 
   /** Изменить пользователя.
@@ -95,15 +93,13 @@ object UserService:
     */
   def update(
       user: User
-  ): ZIO[UserRepository, DatabaseError, User] =
+  ): ZIO[UserRepository, InternalServerError, User] =
     for {
       result <- ZIO
         .serviceWithZIO[UserRepository](_.update(user))
-        .mapError(e => DatabaseError(e.getMessage))
-        .onError(e =>
-          ZIO.logError(s"User $user not updated:\n${e.prettyPrint}")
-        )
-      _ <- ZIO.logInfo(s"User $result updated")
+        .mapError(e => InternalServerError(e.getMessage))
+        .onError(e => ZIO.logError(s"$user not updated:\n${e.prettyPrint}"))
+      _ <- ZIO.logInfo(s"$result updated")
     } yield result
 
   /** Удалить пользователя.
@@ -113,11 +109,11 @@ object UserService:
     */
   def delete(
       id: String
-  ): ZIO[UserRepository, DatabaseError, Unit] =
+  ): ZIO[UserRepository, InternalServerError, Unit] =
     for {
       result <- ZIO
         .serviceWithZIO[UserRepository](_.delete(id))
-        .mapError(e => DatabaseError(e.getMessage))
+        .mapError(e => InternalServerError(e.getMessage))
         .onError(e =>
           ZIO.logError(s"User ($id) not deleted:\n${e.prettyPrint}")
         )

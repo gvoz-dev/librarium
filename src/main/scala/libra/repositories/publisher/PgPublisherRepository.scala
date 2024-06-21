@@ -58,7 +58,7 @@ case class PgPublisherRepository(ds: DataSource) extends PublisherRepository:
     }.provide(dsLayer)
   end all
 
-  /** Получить издателя по ID.
+  /** Найти издателя по ID.
     *
     * @param id
     *   уникальный идентификатор издателя (строка UUID).
@@ -76,19 +76,19 @@ case class PgPublisherRepository(ds: DataSource) extends PublisherRepository:
     } yield result
   end findById
 
-  /** Получить издателя по названию.
+  /** Найти издателя по названию.
     *
     * @param name
     *   название издателя
     */
-  override def findByName(name: String): Task[Option[Publisher]] =
+  override def findByName(name: String): Task[List[Publisher]] =
     run {
       quote {
         query[Publishers]
           .filter(p => p.name == lift(name))
           .map(toPublisher)
       }
-    }.map(_.headOption).provide(dsLayer)
+    }.provide(dsLayer)
   end findByName
 
   /** Создать издателя.

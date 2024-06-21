@@ -1,11 +1,11 @@
-package libra
+package libra.rest
 
 import zio.http.*
 import zio.http.codec.*
 import zio.schema.*
 import zio.schema.annotation.description
 
-package object rest:
+package object api:
 
   /** Кодек для HTTP-заголовка авторизации.
     *
@@ -46,4 +46,4 @@ package object rest:
   /** Гивен ZIO-схемы токена аутентификации. */
   given Schema[Token] = DeriveSchema.gen
 
-end rest
+end api

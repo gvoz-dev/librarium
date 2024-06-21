@@ -2,34 +2,56 @@ package libra.services.publisher
 
 import libra.entities.Publisher
 import libra.repositories.publisher.PublisherRepository
+import libra.utils.ServiceError.*
 import zio.ZIO
 
 /** Сервис издателей. */
 object PublisherService:
 
   /** Получить всех издателей. */
-  def all: ZIO[PublisherRepository, Throwable, List[Publisher]] =
-    ZIO.serviceWithZIO[PublisherRepository](_.all)
+  def all: ZIO[PublisherRepository, RepositoryError, List[Publisher]] =
+    ZIO
+      .serviceWithZIO[PublisherRepository](_.all)
+      .mapError(e => InternalServerError(e.getMessage))
+      .onError(e => ZIO.logError(s"Error:\n${e.prettyPrint}"))
+      .flatMap {
+        case Nil  => ZIO.fail(NotFound("Publishers not found"))
+        case list => ZIO.succeed(list)
+      }
 
-  /** Получить издателя по ID.
+  /** Найти издателя по ID.
     *
     * @param id
     *   уникальный идентификатор издателя (строка UUID).
     */
   def findById(
       id: String
-  ): ZIO[PublisherRepository, Throwable, Option[Publisher]] =
-    ZIO.serviceWithZIO[PublisherRepository](_.findById(id))
+  ): ZIO[PublisherRepository, RepositoryError, Publisher] =
+    ZIO
+      .serviceWithZIO[PublisherRepository](_.findById(id))
+      .mapError(e => InternalServerError(e.getMessage))
+      .onError(e => ZIO.logError(s"Error:\n${e.prettyPrint}"))
+      .flatMap {
+        case None => ZIO.fail(NotFound(s"Publisher not found by ID: $id"))
+        case Some(author) => ZIO.succeed(author)
+      }
 
-  /** Получить издателя по названию.
+  /** Найти издателя по названию.
     *
     * @param name
     *   название издателя
     */
   def findByName(
       name: String
-  ): ZIO[PublisherRepository, Throwable, Option[Publisher]] =
-    ZIO.serviceWithZIO[PublisherRepository](_.findByName(name))
+  ): ZIO[PublisherRepository, RepositoryError, List[Publisher]] =
+    ZIO
+      .serviceWithZIO[PublisherRepository](_.findByName(name))
+      .mapError(e => InternalServerError(e.getMessage))
+      .onError(e => ZIO.logError(s"Error:\n${e.prettyPrint}"))
+      .flatMap {
+        case Nil  => ZIO.fail(NotFound(s"Publishers not found by name: $name"))
+        case list => ZIO.succeed(list)
+      }
 
   /** Создать издателя.
     *
@@ -38,14 +60,15 @@ object PublisherService:
     */
   def create(
       publisher: Publisher
-  ): ZIO[PublisherRepository, Throwable, Publisher] =
+  ): ZIO[PublisherRepository, InternalServerError, Publisher] =
     for {
       result <- ZIO
         .serviceWithZIO[PublisherRepository](_.create(publisher))
+        .mapError(e => InternalServerError(e.getMessage))
         .onError(e =>
-          ZIO.logError(s"Publisher `$publisher` not created:\n${e.prettyPrint}")
+          ZIO.logError(s"$publisher not created:\n${e.prettyPrint}")
         )
-      _ <- ZIO.logInfo(s"Publisher `$result` created")
+      _ <- ZIO.logInfo(s"$result created")
     } yield result
 
   /** Изменить издателя.
@@ -55,14 +78,15 @@ object PublisherService:
     */
   def update(
       publisher: Publisher
-  ): ZIO[PublisherRepository, Throwable, Publisher] =
+  ): ZIO[PublisherRepository, InternalServerError, Publisher] =
     for {
       result <- ZIO
         .serviceWithZIO[PublisherRepository](_.update(publisher))
+        .mapError(e => InternalServerError(e.getMessage))
         .onError(e =>
-          ZIO.logError(s"Publisher `$publisher` not updated:\n${e.prettyPrint}")
+          ZIO.logError(s"$publisher not updated:\n${e.prettyPrint}")
         )
-      _ <- ZIO.logInfo(s"Publisher `$result` updated")
+      _ <- ZIO.logInfo(s"$result updated")
     } yield result
 
   /** Удалить издателя.
@@ -72,14 +96,15 @@ object PublisherService:
     */
   def delete(
       id: String
-  ): ZIO[PublisherRepository, Throwable, Unit] =
+  ): ZIO[PublisherRepository, InternalServerError, Unit] =
     for {
       _ <- ZIO
         .serviceWithZIO[PublisherRepository](_.delete(id))
+        .mapError(e => InternalServerError(e.getMessage))
         .onError(e =>
-          ZIO.logError(s"Publisher `$id` not deleted:\n${e.prettyPrint}")
+          ZIO.logError(s"Publisher ($id) not deleted:\n${e.prettyPrint}")
         )
-      _ <- ZIO.logInfo(s"Publisher `$id` deleted")
+      _ <- ZIO.logInfo(s"Publisher ($id) deleted")
     } yield ()
 
 end PublisherService

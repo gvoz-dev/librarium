@@ -16,7 +16,7 @@ curl -i -X POST \
 
 ----
 
-## Users
+## Registration
 
 ### HTTP-запрос для регистрации пользователя
 
@@ -26,6 +26,10 @@ curl -i -X POST \
 -d '{"name":"libra","email":"example@mail.ru","password":"123"}' \
 'http://127.0.0.1:8080/api/v1/registration'
 ```
+
+----
+
+## Users
 
 ### HTTP-запрос для получения всех пользователей
 
@@ -65,18 +69,62 @@ curl -i -X DELETE \
 
 ----
 
-## Publishers
+## Books
+
+### HTTP-запрос для получения всех книг
 
 ```bash
-curl -i -X POST -H 'Content-Type: application/json' -d '{"name":"BHV","country":"Russia"}' http://127.0.0.1:8080/publishers
+curl -i -X GET 'http://127.0.0.1:8080/api/v1/books'
 ```
 
-```bash
-curl -i -X PATCH -H 'Content-Type: application/json' -d '{"id":"???","name":"BHV","country":"Russia"}' http://127.0.0.1:8080/publishers
-```
+### HTTP-запрос для поиска книги по названию
 
 ```bash
-curl -i -X DELETE "http://127.0.0.1:8080/publishers/???"
+curl -i -X GET 'http://127.0.0.1:8080/api/v1/books?title=???'
+```
+
+### HTTP-запрос для поиска книги по ID
+
+```bash
+curl -i -X GET 'http://127.0.0.1:8080/api/v1/books/???'
+```
+
+### HTTP-запрос для создания новой книги
+
+```bash
+curl -i -X POST \
+-H 'Content-Type: application/json' \
+-H 'X-JWT-Auth: ???' \
+-d '{"title":"TestBook","publisher":{"name":"TestPub","country":"Russia"},"author":{"name":"TestAuthor","country":"Russia"}}' \
+'http://127.0.0.1:8080/api/v1/books'
+```
+
+### HTTP-запрос для изменения книги
+
+```bash
+curl -i -X PUT \
+-H 'Content-Type: application/json' \
+-H 'X-JWT-Auth: ???' \
+-d '{"id":"???","title":"test"},' \
+'http://127.0.0.1:8080/api/v1/books'
+```
+
+### HTTP-запрос для удаления книги
+
+```bash
+curl -i -X DELETE "http://127.0.0.1:8080/api/v1/books/???"
+```
+
+----
+
+## Comments
+
+```bash
+curl -i -X POST \
+-H 'Content-Type: application/json' \
+-H 'X-JWT-Auth: ???' \
+-d '{"text":"cool","isPrivate":true}' \
+'http://127.0.0.1:8080/comments/???/???'
 ```
 
 ----
@@ -107,7 +155,7 @@ curl -i -X GET 'http://127.0.0.1:8080/api/v1/authors/???'
 curl -i -X POST \
 -H 'Content-Type: application/json' \
 -H 'X-JWT-Auth: ???' \
--d '{"name":"Roman","country":"Russia"}' \
+-d '{"name":"Bjarne Stroustrup","country":"Denmark"}' \
 'http://127.0.0.1:8080/api/v1/authors'
 ```
 
@@ -116,36 +164,67 @@ curl -i -X POST \
 ```bash
 curl -i -X PUT \
 -H 'Content-Type: application/json' \
--d '{"id":"???","name":"Gvozdev Roman","country":"Russia"}' \
+-H 'X-JWT-Auth: ???' \
+-d '{"id":"???","name":"Bjarne Stroustrup","country":"USA"}' \
 'http://127.0.0.1:8080/api/v1/authors'
 ```
 
 ### HTTP-запрос для удаления автора
 
 ```bash
-curl -i -X DELETE 'http://127.0.0.1:8080/api/v1/authors/???'
+curl -i -X DELETE \
+-H 'X-JWT-Auth: ???' \
+'http://127.0.0.1:8080/api/v1/authors/???'
 ```
 
 ----
 
-## Books
+## Publishers
+
+### HTTP-запрос для получения всех издателей
 
 ```bash
-curl -i -X POST -H 'Content-Type: application/json' -d '{"title":"test","publisher":{"name":"test","country":"Russia"},"author":{"name":"Roman","country":"Russia"}}' http://127.0.0.1:8080/books
+curl -i -X GET 'http://127.0.0.1:8080/api/v1/publishers'
 ```
 
-```bash
-curl -i -X PATCH -H 'Content-Type: application/json' -d '{"id":"???","title":"test","publisher":{"id":"???","name":"pub","country":"Russia"},"author":{"id":"???","name":"Roma","country":"Russia"}},' http://127.0.0.1:8080/books
-```
+### HTTP-запрос для поиска издателей по имени
 
 ```bash
-curl -i -X DELETE "http://127.0.0.1:8080/books/???"
+curl -i -X GET 'http://127.0.0.1:8080/api/v1/publishers?name=???'
+```
+
+### HTTP-запрос для поиска издателя по ID
+
+```bash
+curl -i -X GET 'http://127.0.0.1:8080/api/v1/publishers/???'
+```
+
+### HTTP-запрос для добавления издателя
+
+```bash
+curl -i -X POST \
+-H 'Content-Type: application/json' \
+-H 'X-JWT-Auth: ???' \
+-d '{"name":"BHV","country":"Russia"}' \
+'http://127.0.0.1:8080/api/v1/publishers'
+```
+
+### HTTP-запрос для изменения издателя
+
+```bash
+curl -i -X PUT \
+-H 'Content-Type: application/json' \
+-H 'X-JWT-Auth: ???' \
+-d '{"id":"???","name":"BHV","country":"Russia"}' \
+'http://127.0.0.1:8080/api/v1/publishers'
+```
+
+### HTTP-запрос для удаления издателя
+
+```bash
+curl -i -X DELETE \
+-H 'X-JWT-Auth: ???' \
+'http://127.0.0.1:8080/api/v1/publishers/???'
 ```
 
 ----
-
-## Comments
-
-```bash
-curl -i -X POST -H 'Content-Type: application/json' -d '{"text":"cool","isPrivate":true}' http://127.0.0.1:8080/comments/???/???
-```

@@ -3,8 +3,10 @@ package libra
 import libra.config.*
 import libra.repositories.PostgresDataSource
 import libra.repositories.author.PgAuthorRepository
+import libra.repositories.book.PgBookRepository
+import libra.repositories.publisher.PgPublisherRepository
 import libra.repositories.user.PgUserRepository
-import libra.rest.*
+import libra.rest.RestRoutes
 import org.flywaydb.core.Flyway
 import zio.*
 import zio.config.typesafe.FromConfigSourceTypesafe
@@ -61,10 +63,12 @@ object App extends ZIOAppDefault:
         .provide(flyway)
       _ <- ZIO.logInfo("Start server")
       _ <- Server
-        .serve(RestApiRoutes())
+        .serve(RestRoutes())
         .provide(
           PgUserRepository.live,
+          PgBookRepository.live,
           PgAuthorRepository.live,
+          PgPublisherRepository.live,
           securityConfig,
           serverConfig,
           Server.live

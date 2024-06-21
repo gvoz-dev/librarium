@@ -5,8 +5,10 @@ import io.github.scottweaver.zio.testcontainers.postgres.ZPostgreSQLContainer
 import libra.*
 import libra.entities.Book
 import libra.repositories.book.BookRepository
+import libra.utils.ServiceError.*
 import zio.*
 import zio.test.*
+import zio.test.Assertion.*
 import zio.test.TestAspect.*
 
 import java.util.UUID
@@ -29,37 +31,34 @@ object BookServiceTest extends ZIOSpecDefault:
             "b43e5b87-a042-461b-8728-653eddced002"
           )
         } yield assertTrue(
-          book.isDefined,
-          book.get.title == "Scala. Профессиональное программирование"
+          book.title == "Scala. Профессиональное программирование"
         )
       },
-      test("#findById should return none if the book does not exist") {
+      test("#findById should fail if the book does not exist") {
         for {
-          book <- BookService.findById(
-            "7a7713e0-a518-4e3a-bf8f-bc984150a3b4"
-          )
-        } yield assertTrue(
-          book.isEmpty
-        )
+          result <- BookService
+            .findById(
+              "7a7713e0-a518-4e3a-bf8f-bc984150a3b4"
+            )
+            .exit
+        } yield assert(result)(fails(isSubtype[NotFound](anything)))
       },
       test("#findByTitle should return the book if it exists") {
         for {
-          book <- BookService.findByTitle(
+          books <- BookService.findByTitle(
             "Scala. Профессиональное программирование"
           )
         } yield assertTrue(
-          book.isDefined,
-          book.get.id.contains(
+          books.nonEmpty,
+          books.head.id.contains(
             UUID.fromString("b43e5b87-a042-461b-8728-653eddced002")
           )
         )
       },
-      test("#findByTitle should return none if the book does not exist") {
+      test("#findByTitle should fail if the book does not exist") {
         for {
-          book <- BookService.findByTitle("Dune")
-        } yield assertTrue(
-          book.isEmpty
-        )
+          result <- BookService.findByTitle("Dune").exit
+        } yield assert(result)(fails(isSubtype[NotFound](anything)))
       },
       test("#create book is correct") {
         val book = Book(
@@ -81,31 +80,28 @@ object BookServiceTest extends ZIOSpecDefault:
           inserted <- BookService.create(book)
           selected <- BookService.findByTitle("Dune")
         } yield assertTrue(
-          selected.isDefined,
-          selected.get.id == inserted.id
+          selected.nonEmpty,
+          selected.head.id == inserted.id
         )
       },
       test("#update book is correct") {
         for {
-          book <- BookService.findByTitle("Dune")
+          books <- BookService.findByTitle("Dune")
           updated <- BookService.update(
-            book.map(_.copy(language = Some("EN"))).get
+            books.head.copy(language = Some("EN"))
           )
           selected <- BookService.findByTitle("Dune")
         } yield assertTrue(
-          selected.isDefined,
-          selected.get.language.contains("EN")
+          selected.nonEmpty,
+          selected.head.language.contains("EN")
         )
       },
       test("#delete book is correct") {
         for {
           book <- BookService.findByTitle("Dune")
-          _ <- BookService.delete(book.get.id.map(_.toString).get)
-          deleted <- BookService.findByTitle("Dune")
-        } yield assertTrue(
-          book.isDefined,
-          deleted.isEmpty
-        )
+          _ <- BookService.delete(book.head.id.map(_.toString).get)
+          result <- BookService.findByTitle("Dune").exit
+        } yield assert(result)(fails(isSubtype[NotFound](anything)))
       }
     )
 

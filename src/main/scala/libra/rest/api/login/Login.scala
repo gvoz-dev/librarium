@@ -1,8 +1,9 @@
-package libra.rest.api
+package libra.rest.api.login
 
 import libra.config.SecurityConfig
 import libra.repositories.user.UserRepository
-import libra.rest.{Credentials, *, given}
+import libra.rest
+import libra.rest.api.{Credentials, *, given}
 import libra.services.user.UserService
 import libra.utils.*
 import libra.utils.ServiceError.*
@@ -11,15 +12,23 @@ import zio.http.*
 import zio.http.codec.*
 import zio.http.codec.PathCodec.*
 import zio.http.endpoint.*
-import zio.http.endpoint.EndpointMiddleware.None
 
-/** API аутентификации пользователя. */
-object LoginApi:
+/** API аутентификации пользователя.
+  *
+  *   - POST /api/v1/login
+  */
+object Login:
 
   private val path = "api" / "v1" / "login"
 
-  // POST api/v1/login
-  private val loginEndpoint =
+  /** Конечная точка API аутентификации. */
+  val endpoint: Endpoint[
+    Unit,
+    Credentials,
+    Unauthorized,
+    Token,
+    EndpointMiddleware.None
+  ] =
     Endpoint((RoutePattern.POST / path) ?? Doc.p("Endpoint for login"))
       .in[Credentials](Doc.p("Login credentials"))
       .examplesIn(
@@ -27,17 +36,18 @@ object LoginApi:
         ("Example #2", Credentials("roman@example.com", "qwe"))
       )
       .out[Token](Doc.p("JSON Web Token"))
-      .outError[AuthenticationError](
+      .outError[Unauthorized](
         Status.Unauthorized,
         Doc.p("Authentication error")
       )
 
-  private val loginRoute =
-    loginEndpoint.implement(
+  /** Маршрут API аутентификации. */
+  val route: Route[SecurityConfig & UserRepository, Nothing] =
+    endpoint.implement(
       handler((login: Credentials) =>
         UserService
           .findByEmail(login.email)
-          .orElseFail(AuthenticationError())
+          .orElseFail(Unauthorized("Invalid email"))
           .flatMap { user =>
             Security
               .validatePassword(login.password, user.password)
@@ -46,7 +56,7 @@ object LoginApi:
                   for {
                     userId <- ZIO
                       .fromOption(user.id)
-                      .orElseFail(AuthenticationError())
+                      .orElseFail(Unauthorized())
                     secret <- Security.secret
                     result <- ZIO
                       .succeed(
@@ -54,16 +64,10 @@ object LoginApi:
                       )
                   } yield result
                 case false =>
-                  ZIO.fail(AuthenticationError("Incorrect password"))
+                  ZIO.fail(Unauthorized("Invalid password"))
               }
           }
       )
     )
 
-  /** Набор конечных точек API аутентификации. */
-  val endpoints = Set(loginEndpoint)
-
-  /** Набор маршрутов API аутентификации. */
-  val routes = Routes(loginRoute)
-
-end LoginApi
+end Login

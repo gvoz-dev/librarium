@@ -8,7 +8,7 @@ object SecurityTest extends ZIOSpecDefault:
 
   private def hashingPasswordsSpec =
     suite("Password hashing functions")(
-      test("#hashing same passwords should return same results") {
+      test("#hashPassword same passwords should return same results") {
         for {
           hash1 <- hashPassword("12345")
           hash2 <- hashPassword("12345")
@@ -18,7 +18,9 @@ object SecurityTest extends ZIOSpecDefault:
           isValid
         )
       },
-      test("#hashing different passwords should return different results") {
+      test(
+        "#hashPassword different passwords should return different results"
+      ) {
         for {
           hash1 <- hashPassword("12345")
           hash2 <- hashPassword("qwe")
@@ -28,6 +30,17 @@ object SecurityTest extends ZIOSpecDefault:
           hash1 != hash2,
           isValid,
           !notValid
+        )
+      },
+      test("#validateEmail is correct") {
+        for {
+          valid <- validateEmail("123@qwe.com")
+          invalid1 <- validateEmail("")
+          invalid2 <- validateEmail("asd")
+        } yield assertTrue(
+          valid,
+          !invalid1,
+          !invalid2
         )
       }
     )

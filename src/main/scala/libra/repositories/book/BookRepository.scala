@@ -9,19 +9,19 @@ trait BookRepository:
   /** Получить все книги. */
   def all: Task[List[Book]]
 
-  /** Получить книгу по ID.
+  /** Найти книгу по ID.
     *
     * @param id
     *   уникальный идентификатор книги (строка UUID).
     */
   def findById(id: String): Task[Option[Book]]
 
-  /** Получить книгу по названию.
+  /** Найти книги по названию.
     *
     * @param title
     *   название книги
     */
-  def findByTitle(title: String): Task[Option[Book]]
+  def findByTitle(title: String): Task[List[Book]]
 
   /** Создать книгу.
     *
