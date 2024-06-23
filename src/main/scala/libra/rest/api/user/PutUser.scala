@@ -71,10 +71,6 @@ object PutUser:
           userId <- ZIO
             .fromOption(user.id)
             .mapBoth(_ => Left(BadRequest("No user id")), _.toString)
-          _ <- ZIO.ifZIO(Security.validateEmail(user.email))(
-            onFalse = ZIO.fail(Left(BadRequest("Invalid email"))),
-            onTrue = ZIO.unit
-          )
           secret <- Security.secret
           claim <- JsonWebToken
             .validateJwt(token, secret)

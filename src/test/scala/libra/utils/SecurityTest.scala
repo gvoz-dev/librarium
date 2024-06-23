@@ -31,17 +31,6 @@ object SecurityTest extends ZIOSpecDefault:
           isValid,
           !notValid
         )
-      },
-      test("#validateEmail is correct") {
-        for {
-          valid <- validateEmail("123@qwe.com")
-          invalid1 <- validateEmail("")
-          invalid2 <- validateEmail("asd")
-        } yield assertTrue(
-          valid,
-          !invalid1,
-          !invalid2
-        )
       }
     )
 

@@ -2,6 +2,7 @@ package libra.entities
 
 import zio.schema.*
 import zio.schema.annotation.*
+import zio.schema.validation.*
 
 import java.time.LocalDateTime
 import java.util.UUID
@@ -18,15 +19,16 @@ import java.util.UUID
   *   дата и время комментария
   */
 final case class Comment(
-    @optionalField
     @description("Comment ID")
+    @optionalField
     id: Option[UUID],
     @description("Comment text")
+    @validate(Validation.minLength(1))
     text: String,
     @description("Is the comment private?")
     isPrivate: Boolean,
-    @optionalField
     @description("Date of comment")
+    @optionalField
     date: Option[LocalDateTime]
 )
 

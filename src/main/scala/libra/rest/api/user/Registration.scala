@@ -53,10 +53,6 @@ object Registration:
     endpoint.implement(
       handler((user: User) =>
         for {
-          _ <- ZIO.ifZIO(Security.validateEmail(user.email))(
-            onFalse = ZIO.fail(Left(BadRequest("Invalid email"))),
-            onTrue = ZIO.unit
-          )
           hash <- Security.hashPassword(user.password)
           result <- UserService
             .create(user.copy(password = hash))

@@ -2,6 +2,7 @@ package libra.entities
 
 import zio.schema.*
 import zio.schema.annotation.*
+import zio.schema.validation.*
 
 import java.util.UUID
 
@@ -15,12 +16,14 @@ import java.util.UUID
   *   страна
   */
 final case class Publisher(
-    @optionalField
     @description("Publisher ID")
+    @optionalField
     id: Option[UUID],
     @description("Publisher's name")
+    @validate(Validation.minLength(1))
     name: String,
     @description("Publisher's country")
+    @validate(Validation.minLength(1))
     country: String
 )
 

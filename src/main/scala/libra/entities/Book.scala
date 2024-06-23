@@ -2,6 +2,7 @@ package libra.entities
 
 import zio.schema.*
 import zio.schema.annotation.*
+import zio.schema.validation.*
 
 import java.util.UUID
 
@@ -35,43 +36,55 @@ import java.util.UUID
   *   автор
   */
 final case class Book(
-    @optionalField
     @description("Book ID")
+    @optionalField
     id: Option[UUID],
     @description("Book title")
+    @validate(Validation.minLength(1))
     title: String,
-    @optionalField
     @description("Book ISBN10")
+    @optionalField
+    @validate(
+      (Validation.minLength(10) && Validation.maxLength(10)).optional(true)
+    )
     isbn: Option[String],
-    @optionalField
     @description("Book ISBN13")
+    @optionalField
+    @validate(
+      (Validation.minLength(13) && Validation.maxLength(13)).optional(true)
+    )
     isbn13: Option[String],
-    @optionalField
     @description("Book edition")
+    @optionalField
+    @validate(Validation.minLength(1).optional(true))
     edition: Option[String],
-    @optionalField
     @description("Year of publication")
+    @optionalField
     year: Option[Int],
-    @optionalField
     @description("Number of pages")
+    @optionalField
     pages: Option[Int],
-    @optionalField
     @description("Cover image")
+    @optionalField
+    @validate(Validation.minLength(1).optional(true))
     image: Option[String],
-    @optionalField
     @description("Book description")
+    @optionalField
+    @validate(Validation.minLength(1).optional(true))
     description: Option[String],
-    @optionalField
     @description("Book language")
+    @optionalField
+    @validate(Validation.minLength(1).optional(true))
     language: Option[String],
-    @optionalField
     @description("Book category")
+    @optionalField
+    @validate(Validation.minLength(1).optional(true))
     category: Option[String],
-    @optionalField
     @description("Book publisher")
-    publisher: Option[Publisher],
     @optionalField
+    publisher: Option[Publisher],
     @description("Book author")
+    @optionalField
     author: Option[Author]
 )
 

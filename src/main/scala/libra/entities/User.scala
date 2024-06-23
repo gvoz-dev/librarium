@@ -2,6 +2,7 @@ package libra.entities
 
 import zio.schema.*
 import zio.schema.annotation.*
+import zio.schema.validation.*
 
 import java.util.UUID
 
@@ -19,18 +20,22 @@ import java.util.UUID
   *   роль пользователя
   */
 final case class User(
-    @optionalField
     @description("User ID")
+    @optionalField
     id: Option[UUID],
     @description("User name")
+    @validate(Validation.minLength(1))
     name: String,
     @description("User email")
+    @validate(Validation.email) // Нечитаемое сообщение об ошибке
     email: String,
-    @transientField
     @description("User password")
+    // @transientField // TODO: В SwaggerUI ломается пример
+    @validate(Validation.minLength(1))
     password: String,
-    @optionalField
     @description("User role")
+    @optionalField
+    @validate(Validation.minLength(1).optional(true))
     role: String = "user"
 )
 
