@@ -6,6 +6,7 @@ import libra.repositories.author.PgAuthorRepository
 import libra.repositories.book.PgBookRepository
 import libra.repositories.publisher.PgPublisherRepository
 import libra.repositories.user.PgUserRepository
+import libra.repositories.userbook.PgUserBookRepository
 import libra.rest.RestRoutes
 import org.flywaydb.core.Flyway
 import zio.*
@@ -67,6 +68,7 @@ object App extends ZIOAppDefault:
         .provide(
           PgUserRepository.live,
           PgBookRepository.live,
+          PgUserBookRepository.live,
           PgAuthorRepository.live,
           PgPublisherRepository.live,
           securityConfig,

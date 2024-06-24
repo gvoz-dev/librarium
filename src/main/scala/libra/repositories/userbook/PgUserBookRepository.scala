@@ -6,7 +6,6 @@ import zio.*
 
 import java.util.UUID
 import javax.sql.DataSource
-import scala.util.Try
 
 /** Реализация репозитория отношений "Пользователь-Книга" для СУБД PostgreSQL.
   *
@@ -27,42 +26,21 @@ case class PgUserBookRepository(ds: DataSource) extends UserBookRepository:
     *   уникальный идентификатор книги
     */
   override def findUserBook(
-      userId: String,
-      bookId: String
+      userId: UUID,
+      bookId: UUID
   ): Task[Option[UUID]] =
     for {
-      userUuid <- ZIO.fromTry(Try(UUID.fromString(userId)))
-      bookUuid <- ZIO.fromTry(Try(UUID.fromString(bookId)))
       result <- run {
         quote {
           query[UsersBooks]
             .filter(ub =>
-              ub.userId == lift(userUuid) && ub.bookId == lift(bookUuid)
+              ub.userId == lift(userId) && ub.bookId == lift(bookId)
             )
             .map(ub => ub.id)
         }
       }.map(_.headOption).provide(dsLayer)
     } yield result
   end findUserBook
-
-  /** Получить ID всех книг в библиотеке пользователя.
-    *
-    * @param userId
-    *   уникальный идентификатор пользователя
-    */
-  override def libraryBooks(
-      userId: String
-  ): Task[List[UUID]] =
-    for {
-      userUuid <- ZIO.fromTry(Try(UUID.fromString(userId)))
-      result <- run {
-        quote {
-          query[UsersBooks]
-            .filter(ub => ub.userId == lift(userUuid) && ub.inLibrary)
-            .map(ub => ub.bookId)
-        }
-      }.provide(dsLayer)
-    } yield result
 
   /** Создать запись отношения "Пользователь-Книга".
     *
@@ -78,29 +56,54 @@ case class PgUserBookRepository(ds: DataSource) extends UserBookRepository:
     *   ретинг от 0 до 5
     */
   private def createUserBook(
-      userId: String,
-      bookId: String,
+      userId: UUID,
+      bookId: UUID,
       inLib: Boolean,
       progress: Float,
       rating: Int
   ): Task[UUID] =
+    transaction {
+      for {
+        // Fail, если заданные пользователь и книга не существуют
+        _ <- run { quote { query[Users].filter(u => u.id == lift(userId)) } }
+          .map(_.headOption)
+          .someOrFail(Exception(s"User ($userId) not found"))
+        _ <- run { quote { query[Books].filter(b => b.id == lift(bookId)) } }
+          .map(_.headOption)
+          .someOrFail(Exception(s"Book ($bookId) not found"))
+        uuid <- Random.nextUUID
+        result <- run {
+          quote {
+            query[UsersBooks]
+              .insertValue(
+                lift(
+                  UsersBooks(uuid, userId, bookId, inLib, progress, rating)
+                )
+              )
+              .returning(ub => ub.id)
+          }
+        }
+      } yield result
+    }.provide(dsLayer)
+  end createUserBook
+
+  /** Получить ID всех книг в библиотеке пользователя.
+    *
+    * @param userId
+    *   уникальный идентификатор пользователя
+    */
+  override def libraryBooks(
+      userId: UUID
+  ): Task[List[UUID]] =
     for {
-      userUuid <- ZIO.fromTry(Try(UUID.fromString(userId)))
-      bookUuid <- ZIO.fromTry(Try(UUID.fromString(bookId)))
-      uuid <- Random.nextUUID
       result <- run {
         quote {
           query[UsersBooks]
-            .insertValue(
-              lift(
-                UsersBooks(uuid, userUuid, bookUuid, inLib, progress, rating)
-              )
-            )
-            .returning(ub => ub.id)
+            .filter(ub => ub.userId == lift(userId) && ub.inLibrary)
+            .map(ub => ub.bookId)
         }
       }.provide(dsLayer)
     } yield result
-  end createUserBook
 
   /** Добавить книгу в библиотеку пользователя.
     *
@@ -110,12 +113,12 @@ case class PgUserBookRepository(ds: DataSource) extends UserBookRepository:
     *   уникальный идентификатор книги
     */
   override def addToLibrary(
-      userId: String,
-      bookId: String
+      userId: UUID,
+      bookId: UUID
   ): Task[Unit] =
     transaction {
       findUserBook(userId, bookId) flatMap {
-        case Some(uuid) => setInLibStatus(true, uuid)
+        case Some(uuid) => setInLibraryStatus(uuid, true)
         case None       => createUserBook(userId, bookId, true, 0, 0).unit
       }
     }.provide(dsLayer)
@@ -129,12 +132,12 @@ case class PgUserBookRepository(ds: DataSource) extends UserBookRepository:
     *   уникальный идентификатор книги
     */
   override def deleteFromLibrary(
-      userId: String,
-      bookId: String
+      userId: UUID,
+      bookId: UUID
   ): Task[Unit] =
     transaction {
       findUserBook(userId, bookId) flatMap {
-        case Some(uuid) => setInLibStatus(false, uuid)
+        case Some(uuid) => setInLibraryStatus(uuid, false)
         case None       => ZIO.unit
       }
     }.provide(dsLayer)
@@ -142,14 +145,14 @@ case class PgUserBookRepository(ds: DataSource) extends UserBookRepository:
 
   /** Установить значение свойства inLibrary в отношении "Пользователь-Книга".
     *
-    * @param inLib
-    *   находится или нет книга в библиотеке пользователя
     * @param userBookUuid
     *   уникальный идентификатор отношения "Пользователь-Книга"
+    * @param inLib
+    *   находится или нет книга в библиотеке пользователя
     */
-  private def setInLibStatus(
-      inLib: Boolean,
-      userBookUuid: UUID
+  private def setInLibraryStatus(
+      userBookUuid: UUID,
+      inLib: Boolean
   ): Task[Unit] =
     run {
       quote {
@@ -158,7 +161,7 @@ case class PgUserBookRepository(ds: DataSource) extends UserBookRepository:
           .update(ub => ub.inLibrary -> lift(inLib))
       }
     }.unit.provide(dsLayer)
-  end setInLibStatus
+  end setInLibraryStatus
 
   /** Получить прогресс прочитанного.
     *
@@ -168,17 +171,15 @@ case class PgUserBookRepository(ds: DataSource) extends UserBookRepository:
     *   уникальный идентификатор книги
     */
   override def getProgress(
-      userId: String,
-      bookId: String
+      userId: UUID,
+      bookId: UUID
   ): Task[Option[Float]] =
     for {
-      userUuid <- ZIO.fromTry(Try(UUID.fromString(userId)))
-      bookUuid <- ZIO.fromTry(Try(UUID.fromString(bookId)))
       result <- run {
         quote {
           query[UsersBooks]
             .filter(ub =>
-              ub.userId == lift(userUuid) && ub.bookId == lift(bookUuid)
+              ub.userId == lift(userId) && ub.bookId == lift(bookId)
             )
             .map(ub => ub.progress)
         }
@@ -195,13 +196,13 @@ case class PgUserBookRepository(ds: DataSource) extends UserBookRepository:
     *   уникальный идентификатор книги
     */
   override def setProgress(
-      progress: Float,
-      userId: String,
-      bookId: String
+      userId: UUID,
+      bookId: UUID,
+      progress: Float
   ): Task[Unit] =
     transaction {
       findUserBook(userId, bookId) flatMap {
-        case Some(uuid) => setProgressStatus(progress, uuid)
+        case Some(uuid) => setProgressStatus(uuid, progress)
         case None => createUserBook(userId, bookId, false, progress, 0).unit
       }
     }.provide(dsLayer)
@@ -209,14 +210,14 @@ case class PgUserBookRepository(ds: DataSource) extends UserBookRepository:
 
   /** Установить прогресс прочитанного в отношении "Пользователь-Книга".
     *
-    * @param progress
-    *   прогресс от 0.0 до 100.0 (%)
     * @param userBookUuid
     *   уникальный идентификатор отношения "Пользователь-Книга"
+    * @param progress
+    *   прогресс от 0.0 до 100.0 (%)
     */
   private def setProgressStatus(
-      progress: Float,
-      userBookUuid: UUID
+      userBookUuid: UUID,
+      progress: Float
   ): Task[Unit] =
     run {
       quote {
@@ -233,14 +234,13 @@ case class PgUserBookRepository(ds: DataSource) extends UserBookRepository:
     *   уникальный идентификатор книги
     */
   override def avgRating(
-      bookId: String
+      bookId: UUID
   ): Task[Option[Float]] =
     for {
-      bookUuid <- ZIO.fromTry(Try(UUID.fromString(bookId)))
       result <- run {
         quote {
           query[UsersBooks]
-            .filter(ub => ub.bookId == lift(bookUuid))
+            .filter(ub => ub.bookId == lift(bookId))
             .map(ub => ub.rating)
             .avg
         }
@@ -256,17 +256,15 @@ case class PgUserBookRepository(ds: DataSource) extends UserBookRepository:
     *   уникальный идентификатор книги
     */
   override def getRating(
-      userId: String,
-      bookId: String
+      userId: UUID,
+      bookId: UUID
   ): Task[Option[Int]] =
     for {
-      userUuid <- ZIO.fromTry(Try(UUID.fromString(userId)))
-      bookUuid <- ZIO.fromTry(Try(UUID.fromString(bookId)))
       result <- run {
         quote {
           query[UsersBooks]
             .filter(ub =>
-              ub.userId == lift(userUuid) && ub.bookId == lift(bookUuid)
+              ub.userId == lift(userId) && ub.bookId == lift(bookId)
             )
             .map(ub => ub.rating)
         }
@@ -283,13 +281,13 @@ case class PgUserBookRepository(ds: DataSource) extends UserBookRepository:
     *   уникальный идентификатор книги
     */
   override def setRating(
-      rating: Int,
-      userId: String,
-      bookId: String
+      userId: UUID,
+      bookId: UUID,
+      rating: Int
   ): Task[Unit] =
     transaction {
       findUserBook(userId, bookId) flatMap {
-        case Some(uuid) => setRatingStatus(rating, uuid)
+        case Some(uuid) => setRatingStatus(uuid, rating)
         case None       => createUserBook(userId, bookId, false, 0, rating).unit
       }
     }.provide(dsLayer)
@@ -297,14 +295,14 @@ case class PgUserBookRepository(ds: DataSource) extends UserBookRepository:
 
   /** Установить рейтинг книги в отношении "Пользователь-Книга".
     *
-    * @param rating
-    *   ретинг от 0 до 5
     * @param userBookUuid
     *   уникальный идентификатор отношения "Пользователь-Книга"
+    * @param rating
+    *   ретинг от 0 до 5
     */
   private def setRatingStatus(
-      rating: Int,
-      userBookUuid: UUID
+      userBookUuid: UUID,
+      rating: Int
   ): Task[Unit] =
     run {
       quote {

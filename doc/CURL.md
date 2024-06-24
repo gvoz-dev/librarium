@@ -117,7 +117,83 @@ curl -i -X DELETE "http://127.0.0.1:8080/api/v1/books/???"
 
 ----
 
+## Library
+
+### HTTP-запрос для получения всех книг из библиотеки пользователя
+
+```bash
+curl -i -X GET 'http://127.0.0.1:8080/api/v1/library/???'
+```
+
+### HTTP-запрос для добавления книги в библиотеку пользователя
+
+```bash
+curl -i -X POST \
+-H 'Content-Type: application/json' \
+-H 'X-JWT-Auth: ???' \
+'http://127.0.0.1:8080/api/v1/library/???/add/???'
+```
+
+### HTTP-запрос для удаления книги из библиотеки пользователя
+
+```bash
+curl -i -X POST \
+-H 'Content-Type: application/json' \
+-H 'X-JWT-Auth: ???' \
+'http://127.0.0.1:8080/api/v1/library/???/delete/???'
+```
+
+----
+
+## Progress
+
+### HTTP-запрос для получения прогресса прочитанного
+
+```bash
+curl -i -X GET 'http://127.0.0.1:8080/api/v1/progress/???/???'
+```
+
+### HTTP-запрос для установки прогресса прочитанного
+
+```bash
+curl -i -X POST \
+-H 'Content-Type: application/json' \
+-H 'X-JWT-Auth: ???' \
+-d '{"value":78}' \
+'http://127.0.0.1:8080/api/v1/progress/???/???'
+```
+
+----
+
+## Rating
+
+### HTTP-запрос для получения среднего рейтинга книги
+
+```bash
+curl -i -X GET 'http://127.0.0.1:8080/api/v1/rating/???/avg'
+```
+
+### HTTP-запрос для получения пользовательского рейтинга
+
+```bash
+curl -i -X GET 'http://127.0.0.1:8080/api/v1/rating/???/???'
+```
+
+### HTTP-запрос для установки пользовательского рейтинга
+
+```bash
+curl -i -X POST \
+-H 'Content-Type: application/json' \
+-H 'X-JWT-Auth: ???' \
+-d '{"value":5}' \
+'http://127.0.0.1:8080/api/v1/rating/???/???'
+```
+
+----
+
 ## Comments
+
+### HTTP-запрос для добавления комментария к книге
 
 ```bash
 curl -i -X POST \

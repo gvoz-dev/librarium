@@ -28,7 +28,7 @@ object JsonWebToken:
         .about(userId.toString)
         .+("role", userRole)
         .issuedNow
-        .expiresIn(3600),
+        .expiresIn(36000), // В целях тестирования токен действует 10 часов
       secretKey,
       JwtAlgorithm.HS256
     )

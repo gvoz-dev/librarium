@@ -15,8 +15,8 @@ trait UserBookRepository:
     *   уникальный идентификатор книги
     */
   def findUserBook(
-      userId: String,
-      bookId: String
+      userId: UUID,
+      bookId: UUID
   ): Task[Option[UUID]]
 
   /** Получить ID всех книг в библиотеке пользователя.
@@ -25,7 +25,7 @@ trait UserBookRepository:
     *   уникальный идентификатор пользователя
     */
   def libraryBooks(
-      userId: String
+      userId: UUID
   ): Task[List[UUID]]
 
   /** Добавить книгу в библиотеку пользователя.
@@ -36,8 +36,8 @@ trait UserBookRepository:
     *   уникальный идентификатор книги
     */
   def addToLibrary(
-      userId: String,
-      bookId: String
+      userId: UUID,
+      bookId: UUID
   ): Task[Unit]
 
   /** Удалить книгу из библиотеки пользователя.
@@ -48,8 +48,8 @@ trait UserBookRepository:
     *   уникальный идентификатор книги
     */
   def deleteFromLibrary(
-      userId: String,
-      bookId: String
+      userId: UUID,
+      bookId: UUID
   ): Task[Unit]
 
   /** Получить прогресс прочитанного.
@@ -60,8 +60,8 @@ trait UserBookRepository:
     *   уникальный идентификатор книги
     */
   def getProgress(
-      userId: String,
-      bookId: String
+      userId: UUID,
+      bookId: UUID
   ): Task[Option[Float]]
 
   /** Установить прогресс прочитанного.
@@ -74,9 +74,9 @@ trait UserBookRepository:
     *   уникальный идентификатор книги
     */
   def setProgress(
-      progress: Float,
-      userId: String,
-      bookId: String
+      userId: UUID,
+      bookId: UUID,
+      progress: Float
   ): Task[Unit]
 
   /** Получить среднее значение рейтинга книги.
@@ -85,7 +85,7 @@ trait UserBookRepository:
     *   уникальный идентификатор книги
     */
   def avgRating(
-      bookId: String
+      bookId: UUID
   ): Task[Option[Float]]
 
   /** Получить пользовательский рейтинг книги.
@@ -96,8 +96,8 @@ trait UserBookRepository:
     *   уникальный идентификатор книги
     */
   def getRating(
-      userId: String,
-      bookId: String
+      userId: UUID,
+      bookId: UUID
   ): Task[Option[Int]]
 
   /** Установить пользовательский рейтинг книги.
@@ -110,9 +110,9 @@ trait UserBookRepository:
     *   уникальный идентификатор книги
     */
   def setRating(
-      rating: Int,
-      userId: String,
-      bookId: String
+      userId: UUID,
+      bookId: UUID,
+      rating: Int
   ): Task[Unit]
 
 end UserBookRepository

@@ -3,7 +3,8 @@ package libra.rest
 import zio.http.*
 import zio.http.codec.*
 import zio.schema.*
-import zio.schema.annotation.description
+import zio.schema.annotation.*
+import zio.schema.validation.*
 
 package object api:
 
@@ -25,8 +26,10 @@ package object api:
     */
   final case class Credentials(
       @description("User email")
+      @validate(Validation.email)
       email: String,
       @description("User password")
+      @validate(Validation.minLength(1))
       password: String
   )
 
@@ -45,5 +48,46 @@ package object api:
 
   /** Гивен ZIO-схемы токена аутентификации. */
   given Schema[Token] = DeriveSchema.gen
+
+  /** Прогресс прочитанного.
+    *
+    * @param value
+    *   значение прогресса
+    */
+  final case class Progress(
+      @description("Progress value")
+      @validate(Validation.between[Float](0.0f, 100.0f)(NumType.FloatType))
+      value: Float
+  )
+
+  /** Гивен ZIO-схемы прогресса прочитанного. */
+  given Schema[Progress] = DeriveSchema.gen
+
+  /** Пользовательский рейтинг книги.
+    *
+    * @param value
+    *   значение рейтинга
+    */
+  final case class Rating(
+      @description("Rating value")
+      @validate(Validation.between[Int](0, 5)(NumType.IntType))
+      value: Int
+  )
+
+  /** Гивен ZIO-схемы пользовательского рейтинга книги. */
+  given Schema[Rating] = DeriveSchema.gen
+
+  /** Средний рейтинг книги.
+    *
+    * @param value
+    *   значение среднего рейтинга
+    */
+  final case class AvgRating(
+      @description("Avg rating value")
+      value: Float
+  )
+
+  /** Гивен ZIO-схемы среднего рейтинга книги. */
+  given Schema[AvgRating] = DeriveSchema.gen
 
 end api

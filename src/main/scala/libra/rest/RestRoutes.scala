@@ -9,6 +9,7 @@ import libra.rest.api.book.*
 import libra.rest.api.login.*
 import libra.rest.api.publisher.*
 import libra.rest.api.user.*
+import libra.rest.api.userbook.*
 import zio.http.Middleware.*
 import zio.http.Routes
 import zio.http.codec.*
@@ -34,6 +35,17 @@ object RestRoutes:
       GetUserById.endpoint,
       PutUser.endpoint,
       DeleteUser.endpoint,
+      // Library
+      GetLibrary.endpoint,
+      PostLibraryAdd.endpoint,
+      PostLibraryDelete.endpoint,
+      // Progress
+      GetProgress.endpoint,
+      PostProgress.endpoint,
+      // Rating
+      GetAvgRating.endpoint,
+      GetRating.endpoint,
+      PostRating.endpoint,
       // Authors
       GetAuthors.endpoint,
       GetAuthorById.endpoint,
@@ -64,6 +76,17 @@ object RestRoutes:
       GetUserById.route,
       PutUser.route,
       DeleteUser.route,
+      // Library
+      GetLibrary.route,
+      PostLibraryAdd.route,
+      PostLibraryDelete.route,
+      // Progress
+      GetProgress.route,
+      PostProgress.route,
+      // Rating
+      GetAvgRating.route,
+      GetRating.route,
+      PostRating.route,
       // Authors
       GetAuthors.route,
       GetAuthorById.route,

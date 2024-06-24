@@ -16,17 +16,17 @@ object UserBookServiceTest extends ZIOSpecDefault:
       test("#findUserBook should return id") {
         for {
           id <- UserBookService.findUserBook(
-            "ca3e509d-06cf-4655-802a-7f8355339e2c",
-            "b43e5b87-a042-461b-8728-653eddced002"
+            UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c"),
+            UUID.fromString("b43e5b87-a042-461b-8728-653eddced002")
           )
         } yield assertTrue(
-          id.map(_.toString).contains("af1add3d-fc76-4ca0-ae99-5194c65f9af5")
+          id.toString == "af1add3d-fc76-4ca0-ae99-5194c65f9af5"
         )
       },
       test("#libraryBooks should return all user's books") {
         for {
           books <- UserBookService.libraryBooks(
-            "ca3e509d-06cf-4655-802a-7f8355339e2c"
+            UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c")
           )
         } yield assertTrue(
           books.nonEmpty,
@@ -37,11 +37,11 @@ object UserBookServiceTest extends ZIOSpecDefault:
       test("#addToLibrary should add book to the user's library") {
         for {
           _ <- UserBookService.addToLibrary(
-            "ca3e509d-06cf-4655-802a-7f8355339e2c",
-            "eb98fd47-793e-448c-ad50-0a68d1f76252"
+            UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c"),
+            UUID.fromString("eb98fd47-793e-448c-ad50-0a68d1f76252")
           )
           books <- UserBookService.libraryBooks(
-            "ca3e509d-06cf-4655-802a-7f8355339e2c"
+            UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c")
           )
         } yield assertTrue(
           books.size == 2,
@@ -53,45 +53,45 @@ object UserBookServiceTest extends ZIOSpecDefault:
       test("#setProgress & #getProgress should match") {
         for {
           _ <- UserBookService.setProgress(
-            95.0f,
-            "ca3e509d-06cf-4655-802a-7f8355339e2c",
-            "eb98fd47-793e-448c-ad50-0a68d1f76252"
+            UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c"),
+            UUID.fromString("eb98fd47-793e-448c-ad50-0a68d1f76252"),
+            95.0f
           )
           progress <- UserBookService.getProgress(
-            "ca3e509d-06cf-4655-802a-7f8355339e2c",
-            "eb98fd47-793e-448c-ad50-0a68d1f76252"
+            UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c"),
+            UUID.fromString("eb98fd47-793e-448c-ad50-0a68d1f76252")
           )
         } yield assertTrue(
-          progress.contains(95.0f)
+          progress == 95.0f
         )
       },
       test("#setRating & #getRating & avgRating should match") {
         for {
           _ <- UserBookService.setRating(
-            5,
-            "ca3e509d-06cf-4655-802a-7f8355339e2c",
-            "eb98fd47-793e-448c-ad50-0a68d1f76252"
+            UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c"),
+            UUID.fromString("eb98fd47-793e-448c-ad50-0a68d1f76252"),
+            5
           )
           rating <- UserBookService.getRating(
-            "ca3e509d-06cf-4655-802a-7f8355339e2c",
-            "eb98fd47-793e-448c-ad50-0a68d1f76252"
+            UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c"),
+            UUID.fromString("eb98fd47-793e-448c-ad50-0a68d1f76252")
           )
           avg <- UserBookService.avgRating(
-            "eb98fd47-793e-448c-ad50-0a68d1f76252"
+            UUID.fromString("eb98fd47-793e-448c-ad50-0a68d1f76252")
           )
         } yield assertTrue(
-          rating.contains(5),
-          avg.contains(5.0f)
+          rating == 5,
+          avg == 5.0f
         )
       },
       test("#deleteFromLibrary should delete book from the user's library") {
         for {
           _ <- UserBookService.deleteFromLibrary(
-            "ca3e509d-06cf-4655-802a-7f8355339e2c",
-            "eb98fd47-793e-448c-ad50-0a68d1f76252"
+            UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c"),
+            UUID.fromString("eb98fd47-793e-448c-ad50-0a68d1f76252")
           )
           books <- UserBookService.libraryBooks(
-            "ca3e509d-06cf-4655-802a-7f8355339e2c"
+            UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c")
           )
         } yield assertTrue(
           books.size == 1,
