@@ -4,6 +4,7 @@ import libra.config.*
 import libra.repositories.PostgresDataSource
 import libra.repositories.author.PgAuthorRepository
 import libra.repositories.book.PgBookRepository
+import libra.repositories.comment.PgCommentRepository
 import libra.repositories.publisher.PgPublisherRepository
 import libra.repositories.user.PgUserRepository
 import libra.repositories.userbook.PgUserBookRepository
@@ -38,9 +39,7 @@ object App extends ZIOAppDefault:
   /** Слой Flyway для выполнения миграций БД. */
   private val flyway: ZLayer[Any, Throwable, Flyway] =
     PostgresDataSource.live >>>
-      ZLayer.fromFunction((ds: DataSource) =>
-        Flyway.configure().dataSource(ds).load()
-      )
+      ZLayer.fromFunction((ds: DataSource) => Flyway.configure().dataSource(ds).load())
 
   /** Слой конфигурации безопасности. */
   private val securityConfig: ZLayer[Any, Config.Error, SecurityConfig] =
@@ -69,6 +68,7 @@ object App extends ZIOAppDefault:
           PgUserRepository.live,
           PgBookRepository.live,
           PgUserBookRepository.live,
+          PgCommentRepository.live,
           PgAuthorRepository.live,
           PgPublisherRepository.live,
           securityConfig,

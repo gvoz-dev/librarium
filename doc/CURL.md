@@ -193,14 +193,48 @@ curl -i -X POST \
 
 ## Comments
 
+### HTTP-запрос для поиска комментария по ID
+
+```bash
+curl -i -X GET 'http://127.0.0.1:8080/api/v1/comments/???'
+```
+
+### HTTP-запрос для поиска комментариев пользователя
+
+```bash
+curl -i -X GET 'http://127.0.0.1:8080/api/v1/comments/user/???'
+```
+
+### HTTP-запрос для поиска комментариев к книге
+
+```bash
+curl -i -X GET 'http://127.0.0.1:8080/api/v1/comments/book/???'
+```
+
+### HTTP-запрос для поиска комментариев пользователя к книге
+
+```bash
+curl -i -X GET 'http://127.0.0.1:8080/api/v1/comments/???/???'
+```
+
 ### HTTP-запрос для добавления комментария к книге
 
 ```bash
 curl -i -X POST \
 -H 'Content-Type: application/json' \
 -H 'X-JWT-Auth: ???' \
--d '{"text":"cool","isPrivate":true}' \
-'http://127.0.0.1:8080/comments/???/???'
+-d '{"text":"cool","userId":"???","bookId":"???","isPrivate":true}' \
+'http://127.0.0.1:8080/api/v1/comments'
+```
+
+### HTTP-запрос для изменения комментария к книге
+
+```bash
+curl -i -X PUT \
+-H 'Content-Type: application/json' \
+-H 'X-JWT-Auth: ???' \
+-d '{"text":"WOW","userId":"???","bookId":"???","isPrivate":true}' \
+'http://127.0.0.1:8080/api/v1/comments'
 ```
 
 ----

@@ -44,15 +44,11 @@ final case class Book(
     title: String,
     @description("Book ISBN10")
     @optionalField
-    @validate(
-      (Validation.minLength(10) && Validation.maxLength(10)).optional(true)
-    )
+    @validate((Validation.minLength(10) && Validation.maxLength(10)).optional(true))
     isbn: Option[String],
     @description("Book ISBN13")
     @optionalField
-    @validate(
-      (Validation.minLength(13) && Validation.maxLength(13)).optional(true)
-    )
+    @validate((Validation.minLength(13) && Validation.maxLength(13)).optional(true))
     isbn13: Option[String],
     @description("Book edition")
     @optionalField

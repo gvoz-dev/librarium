@@ -70,11 +70,12 @@ VALUES
         75.0
     );
 
-INSERT INTO "Comments" ("id", "userBookId", "text", "date")
+INSERT INTO "Comments" ("id", "userId", "bookId", "text", "time")
 VALUES
     (
         '3bde6a1f-3eb7-4f36-b4c0-422ab4f39e99',
-        'af1add3d-fc76-4ca0-ae99-5194c65f9af5',
+        'ca3e509d-06cf-4655-802a-7f8355339e2c',
+        'b43e5b87-a042-461b-8728-653eddced002',
         'Отличная книга, рекомендую!',
         '2024-06-09 20:28:15'
     );

@@ -2,16 +2,21 @@ package libra.rest
 
 import libra.config.SecurityConfig
 import libra.repositories.author.AuthorRepository
+import libra.repositories.book.BookRepository
+import libra.repositories.comment.CommentRepository
+import libra.repositories.publisher.PublisherRepository
 import libra.repositories.user.UserRepository
+import libra.repositories.userbook.UserBookRepository
 import libra.rest
 import libra.rest.api.author.*
 import libra.rest.api.book.*
+import libra.rest.api.comment.*
 import libra.rest.api.login.*
 import libra.rest.api.publisher.*
 import libra.rest.api.user.*
 import libra.rest.api.userbook.*
+import zio.http.*
 import zio.http.Middleware.*
-import zio.http.Routes
 import zio.http.codec.*
 import zio.http.codec.PathCodec.*
 import zio.http.endpoint.openapi.*
@@ -46,6 +51,15 @@ object RestRoutes:
       GetAvgRating.endpoint,
       GetRating.endpoint,
       PostRating.endpoint,
+      // Comments
+      GetCommentById.endpoint,
+      GetUserComments.endpoint,
+      GetCommentsOnBook.endpoint,
+      GetUserCommentsOnBook.endpoint,
+      GetCommentById.endpoint,
+      PostComment.endpoint,
+      PutComment.endpoint,
+      DeleteComment.endpoint,
       // Authors
       GetAuthors.endpoint,
       GetAuthorById.endpoint,
@@ -87,6 +101,15 @@ object RestRoutes:
       GetAvgRating.route,
       GetRating.route,
       PostRating.route,
+      // Comments
+      GetCommentById.route,
+      GetUserComments.route,
+      GetCommentsOnBook.route,
+      GetUserCommentsOnBook.route,
+      GetCommentById.route,
+      PostComment.route,
+      PutComment.route,
+      DeleteComment.route,
       // Authors
       GetAuthors.route,
       GetAuthorById.route,
@@ -116,6 +139,10 @@ object RestRoutes:
   private val corsConfig: CorsConfig = CorsConfig()
 
   /** Маршруты API и сгенерированного SwaggerUI. */
-  def apply() = (routes ++ swaggerRoutes) @@ cors(corsConfig)
+  def apply(): Routes[
+    UserRepository & BookRepository & UserBookRepository & CommentRepository & AuthorRepository & PublisherRepository &
+      SecurityConfig,
+    Response
+  ] = (routes ++ swaggerRoutes) @@ cors(corsConfig)
 
 end RestRoutes

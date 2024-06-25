@@ -14,11 +14,11 @@ import zio.http.endpoint.*
 
 /** API удаления книги.
   *
-  *   - DELETE /api/v1/book/{id}
+  *   - DELETE /api/v1/books/{id}
   */
 object DeleteBook:
 
-  private val path = "api" / "v1" / "book" / PathCodec.string("id")
+  private val path = "api" / "v1" / "books" / PathCodec.string("id")
 
   /** Конечная точка API удаления книги. */
   val endpoint: Endpoint[
@@ -28,19 +28,11 @@ object DeleteBook:
     Unit,
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.DELETE / path) ?? Doc.p("Endpoint for deleting book")
-    )
+    Endpoint((RoutePattern.DELETE / path) ?? Doc.p("Endpoint for deleting book"))
       .header(authHeader)
-      .out[Unit]
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
-      .outError[Unauthorized](
-        Status.Unauthorized,
-        Doc.p("Authorization error")
-      )
+      .out[Unit](Status.NoContent)
+      .outError[InternalServerError](Status.InternalServerError, Doc.p("Service error"))
+      .outError[Unauthorized](Status.Unauthorized, Doc.p("Authorization error"))
 
   /** Маршрут API удаления книги. */
   val route: Route[BookRepository & SecurityConfig, Nothing] =

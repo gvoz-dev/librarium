@@ -19,6 +19,27 @@ trait UserBookRepository:
       bookId: UUID
   ): Task[Option[UUID]]
 
+  /** Создать запись отношения "Пользователь-Книга".
+    *
+    * @param userId
+    *   уникальный идентификатор пользователя
+    * @param bookId
+    *   уникальный идентификатор книги
+    * @param inLib
+    *   находится или нет книга в библиотеке пользователя
+    * @param progress
+    *   прогресс от 0.0 до 100.0 (%)
+    * @param rating
+    *   ретинг от 0 до 5
+    */
+  def createUserBook(
+      userId: UUID,
+      bookId: UUID,
+      inLib: Boolean,
+      progress: Float,
+      rating: Int
+  ): Task[UUID]
+
   /** Получить ID всех книг в библиотеке пользователя.
     *
     * @param userId

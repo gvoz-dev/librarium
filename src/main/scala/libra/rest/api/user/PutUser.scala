@@ -70,12 +70,12 @@ object PutUser:
         for {
           userId <- ZIO
             .fromOption(user.id)
-            .mapBoth(_ => Left(BadRequest("No user id")), _.toString)
+            .mapBoth(_ => Left(BadRequest("No user ID")), _.toString)
           secret <- Security.secret
-          claim <- JsonWebToken
+          claim  <- JsonWebToken
             .validateJwt(token, secret)
             .mapError(err => Right(Left(err)))
-          hash <- Security.hashPassword(user.password)
+          hash   <- Security.hashPassword(user.password)
           result <-
             if JsonWebToken.checkTokenPermissions(claim, userId) then
               UserService

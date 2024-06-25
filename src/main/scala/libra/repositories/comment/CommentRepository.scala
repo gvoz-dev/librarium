@@ -1,39 +1,42 @@
 package libra.repositories.comment
 
 import libra.entities.Comment
+import libra.repositories.userbook.UserBookRepository
 import zio.*
+
+import java.util.UUID
 
 /** Репозиторий пользовательских комментариев к книгам. */
 trait CommentRepository:
 
-  /** Получить комментарий по ID.
+  /** Найти комментарий по ID.
     *
     * @param id
     *   уникальный идентификатор комментария
     */
   def findById(
-      id: String
+      id: UUID
   ): Task[Option[Comment]]
 
-  /** Получить все комментарии пользователя.
+  /** Найти все комментарии пользователя.
     *
     * @param userId
     *   уникальный идентификатор пользователя
     */
   def findByUser(
-      userId: String
+      userId: UUID
   ): Task[List[Comment]]
 
-  /** Получить все комментарии к книге.
+  /** Найти все комментарии к книге.
     *
     * @param bookId
     *   уникальный идентификатор книги
     */
   def findByBook(
-      bookId: String
+      bookId: UUID
   ): Task[List[Comment]]
 
-  /** Получить все комментарии пользователя к книге.
+  /** Найти все комментарии пользователя к книге.
     *
     * @param userId
     *   уникальный идентификатор пользователя
@@ -41,23 +44,17 @@ trait CommentRepository:
     *   уникальный идентификатор книги
     */
   def findByUserAndBook(
-      userId: String,
-      bookId: String
+      userId: UUID,
+      bookId: UUID
   ): Task[List[Comment]]
 
   /** Добавить комментарий пользователя к книге.
     *
     * @param comment
     *   комментарий
-    * @param userId
-    *   уникальный идентификатор пользователя
-    * @param bookId
-    *   уникальный идентификатор книги
     */
   def create(
-      comment: Comment,
-      userId: String,
-      bookId: String
+      comment: Comment
   ): Task[Comment]
 
   /** Изменить комментарий.
@@ -75,7 +72,7 @@ trait CommentRepository:
     *   уникальный идентификатор комментария
     */
   def delete(
-      id: String
+      id: UUID
   ): Task[Unit]
 
 end CommentRepository

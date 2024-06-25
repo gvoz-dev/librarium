@@ -2,42 +2,66 @@ package libra.services.comment
 
 import libra.entities.Comment
 import libra.repositories.comment.CommentRepository
+import libra.utils.ServiceError.*
 import zio.ZIO
+
+import java.util.UUID
 
 /** Сервис пользовательских комментариев к книгам. */
 object CommentService:
 
-  /** Получить комментарий по ID.
+  /** Найти комментарий по ID.
     *
     * @param id
     *   уникальный идентификатор комментария
     */
   def findById(
-      id: String
-  ): ZIO[CommentRepository, Throwable, Option[Comment]] =
-    ZIO.serviceWithZIO[CommentRepository](_.findById(id))
+      id: UUID
+  ): ZIO[CommentRepository, RepositoryError, Comment] =
+    ZIO
+      .serviceWithZIO[CommentRepository](_.findById(id))
+      .mapError(e => InternalServerError(e.getMessage))
+      .onError(e => ZIO.logError(s"Error:\n${e.prettyPrint}"))
+      .flatMap {
+        case None          => ZIO.fail(NotFound(s"Comment not found by ID: $id"))
+        case Some(comment) => ZIO.succeed(comment)
+      }
 
-  /** Сервис получения всех комментариев пользователя.
+  /** Найти все комментарии пользователя.
     *
     * @param userId
     *   уникальный идентификатор пользователя
     */
   def findByUser(
-      userId: String
-  ): ZIO[CommentRepository, Throwable, List[Comment]] =
-    ZIO.serviceWithZIO[CommentRepository](_.findByUser(userId))
+      userId: UUID
+  ): ZIO[CommentRepository, RepositoryError, List[Comment]] =
+    ZIO
+      .serviceWithZIO[CommentRepository](_.findByUser(userId))
+      .mapError(e => InternalServerError(e.getMessage))
+      .onError(e => ZIO.logError(s"Error:\n${e.prettyPrint}"))
+      .flatMap {
+        case Nil  => ZIO.fail(NotFound("Comments not found"))
+        case list => ZIO.succeed(list)
+      }
 
-  /** Сервис получения всех комментариев к книге.
+  /** Найти все комментарии к книге.
     *
     * @param bookId
     *   уникальный идентификатор книги
     */
   def findByBook(
-      bookId: String
-  ): ZIO[CommentRepository, Throwable, List[Comment]] =
-    ZIO.serviceWithZIO[CommentRepository](_.findByBook(bookId))
+      bookId: UUID
+  ): ZIO[CommentRepository, RepositoryError, List[Comment]] =
+    ZIO
+      .serviceWithZIO[CommentRepository](_.findByBook(bookId))
+      .mapError(e => InternalServerError(e.getMessage))
+      .onError(e => ZIO.logError(s"Error:\n${e.prettyPrint}"))
+      .flatMap {
+        case Nil  => ZIO.fail(NotFound("Comments not found"))
+        case list => ZIO.succeed(list)
+      }
 
-  /** Сервис получения всех комментариев пользователя к книге.
+  /** Найти все комментарии пользователя к книге.
     *
     * @param userId
     *   уникальный идентификатор пользователя
@@ -45,64 +69,64 @@ object CommentService:
     *   уникальный идентификатор книги
     */
   def findByUserAndBook(
-      userId: String,
-      bookId: String
-  ): ZIO[CommentRepository, Throwable, List[Comment]] =
-    ZIO.serviceWithZIO[CommentRepository](_.findByUserAndBook(userId, bookId))
+      userId: UUID,
+      bookId: UUID
+  ): ZIO[CommentRepository, RepositoryError, List[Comment]] =
+    ZIO
+      .serviceWithZIO[CommentRepository](_.findByUserAndBook(userId, bookId))
+      .mapError(e => InternalServerError(e.getMessage))
+      .onError(e => ZIO.logError(s"Error:\n${e.prettyPrint}"))
+      .flatMap {
+        case Nil  => ZIO.fail(NotFound("Comments not found"))
+        case list => ZIO.succeed(list)
+      }
 
-  /** Сервис добавления комментария пользователя к книге.
+  /** Добавить комментарий пользователя к книге.
     *
     * @param comment
     *   комментарий
-    * @param userId
-    *   уникальный идентификатор пользователя
-    * @param bookId
-    *   уникальный идентификатор книги
     */
   def create(
-      comment: Comment,
-      userId: String,
-      bookId: String
-  ): ZIO[CommentRepository, Throwable, Comment] =
+      comment: Comment
+  ): ZIO[CommentRepository, InternalServerError, Comment] =
     for {
       result <- ZIO
-        .serviceWithZIO[CommentRepository](_.create(comment, userId, bookId))
-        .onError(e =>
-          ZIO.logError(s"Comment `$comment` not created:\n${e.prettyPrint}")
-        )
-      _ <- ZIO.logInfo(s"Comment `$result` created")
+        .serviceWithZIO[CommentRepository](_.create(comment))
+        .mapError(e => InternalServerError(e.getMessage))
+        .onError(e => ZIO.logError(s"$comment not created:\n${e.prettyPrint}"))
+      _      <- ZIO.logInfo(s"$result created")
     } yield result
 
-  /** Сервис изменения комментария.
+  /** Изменить комментарий.
     *
     * @param comment
     *   комментарий
     */
   def update(
       comment: Comment
-  ): ZIO[CommentRepository, Throwable, Comment] =
+  ): ZIO[CommentRepository, InternalServerError, Comment] =
     for {
       result <- ZIO
         .serviceWithZIO[CommentRepository](_.update(comment))
-        .onError(e =>
-          ZIO.logError(s"Comment `$comment` not updated:\n${e.prettyPrint}")
-        )
-      _ <- ZIO.logInfo(s"Comment `$result` updated")
+        .mapError(e => InternalServerError(e.getMessage))
+        .onError(e => ZIO.logError(s"$comment not updated:\n${e.prettyPrint}"))
+      _      <- ZIO.logInfo(s"$result updated")
     } yield result
 
-  /** Сервис удаления комментария.
+  /** Удалить комментарий.
     *
     * @param id
     *   уникальный идентификатор комментария
     */
-  def delete(id: String): ZIO[CommentRepository, Throwable, Unit] =
+  def delete(
+      id: UUID
+  ): ZIO[CommentRepository, InternalServerError, Unit] =
     for {
       _ <- ZIO
         .serviceWithZIO[CommentRepository](_.delete(id))
-        .onError(e =>
-          ZIO.logError(s"Comment `$id` not deleted:\n${e.prettyPrint}")
-        )
-      _ <- ZIO.logInfo(s"Comment `$id` deleted")
+        .mapError(e => InternalServerError(e.getMessage))
+        .onError(e => ZIO.logError(s"Comment ($id) not deleted:\n${e.prettyPrint}"))
+      _ <- ZIO.logInfo(s"Comment ($id) deleted")
     } yield ()
 
 end CommentService

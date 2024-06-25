@@ -29,17 +29,13 @@ case class PgUserBookRepository(ds: DataSource) extends UserBookRepository:
       userId: UUID,
       bookId: UUID
   ): Task[Option[UUID]] =
-    for {
-      result <- run {
-        quote {
-          query[UsersBooks]
-            .filter(ub =>
-              ub.userId == lift(userId) && ub.bookId == lift(bookId)
-            )
-            .map(ub => ub.id)
-        }
-      }.map(_.headOption).provide(dsLayer)
-    } yield result
+    run {
+      quote {
+        query[UsersBooks]
+          .filter(ub => ub.userId == lift(userId) && ub.bookId == lift(bookId))
+          .map(ub => ub.id)
+      }
+    }.map(_.headOption).provide(dsLayer)
   end findUserBook
 
   /** Создать запись отношения "Пользователь-Книга".
@@ -55,7 +51,7 @@ case class PgUserBookRepository(ds: DataSource) extends UserBookRepository:
     * @param rating
     *   ретинг от 0 до 5
     */
-  private def createUserBook(
+  def createUserBook(
       userId: UUID,
       bookId: UUID,
       inLib: Boolean,
@@ -64,14 +60,14 @@ case class PgUserBookRepository(ds: DataSource) extends UserBookRepository:
   ): Task[UUID] =
     transaction {
       for {
-        // Fail, если заданные пользователь и книга не существуют
-        _ <- run { quote { query[Users].filter(u => u.id == lift(userId)) } }
+        // Fail, если заданные пользователь и/или книга не существуют
+        _      <- run { quote { query[Users].filter(u => u.id == lift(userId)) } }
           .map(_.headOption)
           .someOrFail(Exception(s"User ($userId) not found"))
-        _ <- run { quote { query[Books].filter(b => b.id == lift(bookId)) } }
+        _      <- run { quote { query[Books].filter(b => b.id == lift(bookId)) } }
           .map(_.headOption)
           .someOrFail(Exception(s"Book ($bookId) not found"))
-        uuid <- Random.nextUUID
+        uuid   <- Random.nextUUID
         result <- run {
           quote {
             query[UsersBooks]
@@ -178,9 +174,7 @@ case class PgUserBookRepository(ds: DataSource) extends UserBookRepository:
       result <- run {
         quote {
           query[UsersBooks]
-            .filter(ub =>
-              ub.userId == lift(userId) && ub.bookId == lift(bookId)
-            )
+            .filter(ub => ub.userId == lift(userId) && ub.bookId == lift(bookId))
             .map(ub => ub.progress)
         }
       }.map(_.headOption).provide(dsLayer)
@@ -203,7 +197,7 @@ case class PgUserBookRepository(ds: DataSource) extends UserBookRepository:
     transaction {
       findUserBook(userId, bookId) flatMap {
         case Some(uuid) => setProgressStatus(uuid, progress)
-        case None => createUserBook(userId, bookId, false, progress, 0).unit
+        case None       => createUserBook(userId, bookId, false, progress, 0).unit
       }
     }.provide(dsLayer)
   end setProgress
@@ -263,9 +257,7 @@ case class PgUserBookRepository(ds: DataSource) extends UserBookRepository:
       result <- run {
         quote {
           query[UsersBooks]
-            .filter(ub =>
-              ub.userId == lift(userId) && ub.bookId == lift(bookId)
-            )
+            .filter(ub => ub.userId == lift(userId) && ub.bookId == lift(bookId))
             .map(ub => ub.rating)
         }
       }.map(_.headOption).provide(dsLayer)

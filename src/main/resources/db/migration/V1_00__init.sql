@@ -104,15 +104,20 @@ CREATE TABLE IF NOT EXISTS "UsersBooks"
 CREATE TABLE IF NOT EXISTS "Comments"
 (
     "id" uuid NOT NULL,
-    "userBookId" uuid NOT NULL,
+    "userId" uuid NOT NULL,
+    "bookId" uuid NOT NULL,
     "text" text NOT NULL,
     "isPrivate" boolean DEFAULT FALSE,
-    "date" timestamp NOT NULL,
-    -- в будущем можно добавить "время последнего изменения"
+    "time" timestamp NOT NULL,
+    "lastModifiedTime" timestamp,
 
     CONSTRAINT "CommentPK" PRIMARY KEY ("id"),
-    CONSTRAINT "UserBookFK" FOREIGN KEY ("userBookId")
-        REFERENCES "UsersBooks" ("id") MATCH SIMPLE
+    CONSTRAINT "UserFK" FOREIGN KEY ("userId")
+        REFERENCES "Users" ("id") MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT "BookFK" FOREIGN KEY ("bookId")
+        REFERENCES "Books" ("id") MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
 );

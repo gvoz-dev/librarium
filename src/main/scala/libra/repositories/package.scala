@@ -156,22 +156,28 @@ package object repositories:
   /** Запись (строка) в таблице "Комментарии".
     *
     * @param id
-    *   уникальный идентификатор комментария
-    * @param userBookId
-    *   уникальный идентификатор отношения "Пользователь-Книга"
+    *   уникальный идентификатор
+    * @param userId
+    *   уникальный идентификатор пользователя
+    * @param bookId
+    *   уникальный идентификатор книги
     * @param text
     *   текст комментария
     * @param isPrivate
     *   является или нет комментарий приватным
-    * @param date
-    *   дата добавления комментария
+    * @param time
+    *   время публикации комментария
+    * @param lastModifiedTime
+    *   время последнего изменения
     */
   final case class Comments(
       id: UUID,
-      userBookId: UUID,
+      userId: UUID,
+      bookId: UUID,
       text: String,
       isPrivate: Boolean,
-      date: LocalDateTime
+      time: LocalDateTime,
+      lastModifiedTime: Option[LocalDateTime]
   )
 
 end repositories

@@ -11,25 +11,38 @@ import java.util.UUID
   *
   * @param id
   *   уникальный идентификатор
+  * @param userId
+  *   уникальный идентификатор пользователя
+  * @param bookId
+  *   уникальный идентификатор книги
   * @param text
   *   текст комментария
   * @param isPrivate
   *   является или нет комментарий приватным
-  * @param date
-  *   дата и время комментария
+  * @param time
+  *   время публикации комментария
+  * @param lastModifiedTime
+  *   время последнего изменения
   */
 final case class Comment(
     @description("Comment ID")
     @optionalField
     id: Option[UUID],
+    @description("User ID")
+    userId: UUID,
+    @description("Book ID")
+    bookId: UUID,
     @description("Comment text")
     @validate(Validation.minLength(1))
     text: String,
     @description("Is the comment private?")
     isPrivate: Boolean,
-    @description("Date of comment")
+    @description("Post time")
     @optionalField
-    date: Option[LocalDateTime]
+    time: Option[LocalDateTime],
+    @description("Last modified time")
+    @optionalField
+    lastModifiedTime: Option[LocalDateTime]
 )
 
 object Comment:

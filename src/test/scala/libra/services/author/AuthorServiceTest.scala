@@ -70,10 +70,10 @@ object AuthorServiceTest extends ZIOSpecDefault:
         )
       },
       test("#update author is correct") {
-        val uuid = UUID.fromString("7a7713e0-a518-4e3a-bf8f-bc984150a3b4")
+        val uuid   = UUID.fromString("7a7713e0-a518-4e3a-bf8f-bc984150a3b4")
         val author = Author(Some(uuid), "Martin Odersky", Some("Switzerland"))
         for {
-          updated <- AuthorService.update(author)
+          updated  <- AuthorService.update(author)
           selected <- AuthorService.findByName("Martin Odersky")
         } yield assertTrue(
           selected.nonEmpty,
@@ -83,8 +83,8 @@ object AuthorServiceTest extends ZIOSpecDefault:
       test("#delete author is correct") {
         for {
           authors <- AuthorService.findByName("Gvozdev Roman")
-          _ <- AuthorService.delete(authors.head.id.map(_.toString).get)
-          result <- AuthorService.findByName("Gvozdev Roman").exit
+          _       <- AuthorService.delete(authors.head.id.map(_.toString).get)
+          result  <- AuthorService.findByName("Gvozdev Roman").exit
         } yield assert(result)(fails(isSubtype[NotFound](anything)))
       }
     )
