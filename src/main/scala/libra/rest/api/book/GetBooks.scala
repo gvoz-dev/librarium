@@ -27,24 +27,11 @@ object GetBooks:
     List[Book],
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.GET / path) ?? Doc.p("Endpoint for querying books")
-    )
-      .query(
-        QueryCodec
-          .query("title")
-          .optional
-          ?? Doc.p("Query parameter to search books by title")
-      )
+    Endpoint((RoutePattern.GET / path) ?? Doc.p("Querying books"))
+      .query(QueryCodec.query("title").optional ?? Doc.p("Query parameter to search books by title"))
       .out[List[Book]](Doc.p("List of books"))
-      .outError[NotFound](
-        Status.NotFound,
-        Doc.p("Not found error")
-      )
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
+      .outError[NotFound](Status.NotFound)
+      .outError[InternalServerError](Status.InternalServerError)
 
   /** Маршрут API получения книг. */
   val route: Route[BookRepository, Nothing] =

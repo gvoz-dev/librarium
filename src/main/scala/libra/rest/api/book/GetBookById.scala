@@ -10,40 +10,33 @@ import zio.http.codec.*
 import zio.http.codec.PathCodec.*
 import zio.http.endpoint.*
 
+import java.util.UUID
+
 /** API получения книги по идентификатору.
   *
   *   - GET /api/v1/books/{id}
   */
 object GetBookById:
 
-  private val path = "api" / "v1" / "books" / PathCodec.string("id")
+  private val path = "api" / "v1" / "books" / PathCodec.uuid("id")
 
   /** Конечная точка API получения книги по идентификатору. */
   val endpoint: Endpoint[
-    String,
-    String,
+    UUID,
+    UUID,
     Either[InternalServerError, NotFound],
     Book,
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.GET / path)
-        ?? Doc.p("Endpoint for querying book by ID")
-    )
+    Endpoint((RoutePattern.GET / path) ?? Doc.p("Querying book by ID"))
       .out[Book](Doc.p("Book"))
-      .outError[NotFound](
-        Status.NotFound,
-        Doc.p("Not found error")
-      )
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
+      .outError[NotFound](Status.NotFound)
+      .outError[InternalServerError](Status.InternalServerError)
 
   /** Маршрут API получения книги по идентификатору. */
   val route: Route[BookRepository, Nothing] =
     endpoint.implement(
-      handler((id: String) =>
+      handler((id: UUID) =>
         BookService
           .findById(id)
           .mapError {

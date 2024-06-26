@@ -23,8 +23,8 @@ object Security:
   def hashPassword(password: String): UIO[String] =
     ZIO.succeed {
       val data: Array[Byte] = password.getBytes(StandardCharsets.UTF_8)
-      val messageDigest = MessageDigest.getInstance("SHA-256")
-      val encodedHash = messageDigest.digest(data)
+      val messageDigest     = MessageDigest.getInstance("SHA-256")
+      val encodedHash       = messageDigest.digest(data)
       bytesToHexString(encodedHash)
     }
 

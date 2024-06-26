@@ -7,7 +7,6 @@ import zio.*
 
 import java.util.UUID
 import javax.sql.DataSource
-import scala.util.Try
 
 /** Реализация репозитория пользователей для СУБД PostgreSQL.
   *
@@ -62,19 +61,16 @@ case class PgUserRepository(ds: DataSource) extends UserRepository:
   /** Найти пользователя по ID.
     *
     * @param id
-    *   уникальный идентификатор пользователя (строка UUID).
+    *   уникальный идентификатор пользователя
     */
-  override def findById(id: String): Task[Option[User]] =
-    for {
-      uuid <- ZIO.fromTry(Try(UUID.fromString(id)))
-      result <- run {
-        quote {
-          query[Users]
-            .filter(u => u.id == lift(uuid))
-            .map(toUser)
-        }
-      }.map(_.headOption).provide(dsLayer)
-    } yield result
+  override def findById(id: UUID): Task[Option[User]] =
+    run {
+      quote {
+        query[Users]
+          .filter(u => u.id == lift(id))
+          .map(toUser)
+      }
+    }.map(_.headOption).provide(dsLayer)
   end findById
 
   /** Найти пользователя по email.
@@ -114,14 +110,15 @@ case class PgUserRepository(ds: DataSource) extends UserRepository:
     */
   override def create(user: User): Task[User] =
     for {
-      id <- Random.nextUUID
-      result <- run {
-        quote {
-          query[Users]
-            .insertValue(toUsersRow(id, user))
-            .returning(toUser)
-        }
-      }.provide(dsLayer)
+      id     <- Random.nextUUID
+      result <-
+        run {
+          quote {
+            query[Users]
+              .insertValue(toUsersRow(id, user))
+              .returning(toUser)
+          }
+        }.provide(dsLayer)
     } yield result
   end create
 
@@ -132,45 +129,45 @@ case class PgUserRepository(ds: DataSource) extends UserRepository:
     */
   override def update(user: User): Task[User] =
     for {
-      id <- ZIO.getOrFail(user.id)
-      result <- run {
-        quote {
-          query[Users]
-            .filter(u => u.id == lift(id))
-            .updateValue(toUsersRow(id, user))
-            .returning(toUser)
-        }
-      }.provide(dsLayer)
+      id     <- ZIO.getOrFail(user.id)
+      result <-
+        run {
+          quote {
+            query[Users]
+              .filter(u => u.id == lift(id))
+              .updateValue(toUsersRow(id, user))
+              .returning(toUser)
+          }
+        }.provide(dsLayer)
     } yield result
   end update
 
   /** Удалить пользователя.
     *
     * @param id
-    *   уникальный идентификатор пользователя (строка UUID).
+    *   уникальный идентификатор пользователя
     */
-  override def delete(id: String): Task[Unit] =
-    for {
-      uuid <- ZIO.fromTry(Try(UUID.fromString(id)))
-      result <- transaction {
-        for {
-          _ <- run {
+  override def delete(id: UUID): Task[Unit] =
+    transaction {
+      for {
+        _ <-
+          run {
             quote {
               query[UsersBooks]
-                .filter(ub => ub.userId == lift(uuid))
+                .filter(ub => ub.userId == lift(id))
                 .delete
             }
           }
-          _ <- run {
+        _ <-
+          run {
             quote {
               query[Users]
-                .filter(u => u.id == lift(uuid))
+                .filter(u => u.id == lift(id))
                 .delete
             }
           }
-        } yield ()
-      }.provide(dsLayer)
-    } yield result
+      } yield ()
+    }.provide(dsLayer)
   end delete
 
 end PgUserRepository

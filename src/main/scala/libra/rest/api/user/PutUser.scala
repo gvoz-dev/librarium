@@ -32,7 +32,7 @@ object PutUser:
     User,
     EndpointMiddleware.None
   ] =
-    Endpoint((RoutePattern.PUT / path) ?? Doc.p("Endpoint for updating user"))
+    Endpoint((RoutePattern.PUT / path) ?? Doc.p("Updating user"))
       .header(authHeader)
       .in[User](Doc.p("User"))
       .examplesIn(
@@ -50,18 +50,9 @@ object PutUser:
         )
       )
       .out[User](Doc.p("Updated user"))
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
-      .outError[Unauthorized](
-        Status.Unauthorized,
-        Doc.p("Authorization error")
-      )
-      .outError[BadRequest](
-        Status.BadRequest,
-        Doc.p("Invalid user data")
-      )
+      .outError[InternalServerError](Status.InternalServerError)
+      .outError[Unauthorized](Status.Unauthorized)
+      .outError[BadRequest](Status.BadRequest)
 
   /** Маршрут API изменения пользователя. */
   val route: Route[UserRepository & SecurityConfig, Nothing] =

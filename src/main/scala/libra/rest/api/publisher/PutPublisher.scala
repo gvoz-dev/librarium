@@ -32,9 +32,7 @@ object PutPublisher:
     Publisher,
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.PUT / path) ?? Doc.p("Endpoint for updating publisher")
-    )
+    Endpoint((RoutePattern.PUT / path) ?? Doc.p("Updating publisher"))
       .header(authHeader)
       .in[Publisher](Doc.p("Publisher"))
       .examplesIn(
@@ -51,14 +49,8 @@ object PutPublisher:
         )
       )
       .out[Publisher](Doc.p("Updated publisher"))
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
-      .outError[Unauthorized](
-        Status.Unauthorized,
-        Doc.p("Authorization error")
-      )
+      .outError[InternalServerError](Status.InternalServerError)
+      .outError[Unauthorized](Status.Unauthorized)
 
   /** Маршрут API изменения издателя. */
   val route: Route[PublisherRepository & SecurityConfig, Nothing] =

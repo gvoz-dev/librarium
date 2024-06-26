@@ -16,7 +16,7 @@ import java.util.UUID
 object PublisherServiceTest extends ZIOSpecDefault:
 
   private def publisherServiceSpec =
-    suite("Publisher service & repo functions")(
+    suite("Publisher service functions")(
       test("#all should return 3 publishers") {
         for {
           publishers <- PublisherService.all
@@ -27,9 +27,8 @@ object PublisherServiceTest extends ZIOSpecDefault:
       },
       test("#findById should return the publisher if it exists") {
         for {
-          publisher <- PublisherService.findById(
-            "b43e5b87-a042-461b-8728-653eddced002"
-          )
+          publisher <- PublisherService
+            .findById(UUID.fromString("b43e5b87-a042-461b-8728-653eddced002"))
         } yield assertTrue(
           publisher.name == "Addison-Wesley"
         )
@@ -37,9 +36,7 @@ object PublisherServiceTest extends ZIOSpecDefault:
       test("#findById should fail if the publisher does not exist") {
         for {
           result <- PublisherService
-            .findById(
-              "7a7713e0-a518-4e3a-bf8f-bc984150a3b4"
-            )
+            .findById(UUID.fromString("7a7713e0-a518-4e3a-bf8f-bc984150a3b4"))
             .exit
         } yield assert(result)(fails(isSubtype[NotFound](anything)))
       },
@@ -69,10 +66,10 @@ object PublisherServiceTest extends ZIOSpecDefault:
         )
       },
       test("#update publisher is correct") {
-        val uuid = UUID.fromString("4c007df8-4c12-435b-9c1d-082e204db21e")
+        val uuid      = UUID.fromString("4c007df8-4c12-435b-9c1d-082e204db21e")
         val publisher = Publisher(Some(uuid), "Science", "USSR")
         for {
-          updated <- PublisherService.update(publisher)
+          updated  <- PublisherService.update(publisher)
           selected <- PublisherService.findByName("Science")
         } yield assertTrue(
           selected.nonEmpty,
@@ -82,14 +79,14 @@ object PublisherServiceTest extends ZIOSpecDefault:
       test("#delete publisher is correct") {
         for {
           publisher <- PublisherService.findByName("Manning")
-          _ <- PublisherService.delete(publisher.head.id.map(_.toString).get)
-          result <- PublisherService.findByName("Manning").exit
+          _         <- PublisherService.delete(publisher.head.id.get)
+          result    <- PublisherService.findByName("Manning").exit
         } yield assert(result)(fails(isSubtype[NotFound](anything)))
       }
     )
 
   override def spec: Spec[TestEnvironment & Scope, Any] =
-    (suite("Publisher service & repo tests")(
+    (suite("Publisher service tests")(
       publisherServiceSpec
     ) @@ DbMigrationAspect.migrate("db/migration")() @@ sequential)
       .provideShared(

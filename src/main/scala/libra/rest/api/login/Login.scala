@@ -32,14 +32,11 @@ object Login:
     Endpoint((RoutePattern.POST / path) ?? Doc.p("Endpoint for login"))
       .in[Credentials](Doc.p("Login credentials"))
       .examplesIn(
-        ("Example #1", Credentials("admin@example.com", "12345")),
-        ("Example #2", Credentials("roman@example.com", "qwe"))
+        ("Admin", Credentials("admin@example.com", "12345")),
+        ("User", Credentials("roman@example.com", "qwe"))
       )
       .out[Token](Doc.p("JSON Web Token"))
-      .outError[Unauthorized](
-        Status.Unauthorized,
-        Doc.p("Authentication error")
-      )
+      .outError[Unauthorized](Status.Unauthorized)
 
   /** Маршрут API аутентификации. */
   val route: Route[SecurityConfig & UserRepository, Nothing] =
@@ -52,19 +49,13 @@ object Login:
             Security
               .validatePassword(login.password, user.password)
               .flatMap {
-                case true =>
+                case true  =>
                   for {
-                    userId <- ZIO
-                      .fromOption(user.id)
-                      .orElseFail(Unauthorized())
+                    userId <- ZIO.fromOption(user.id).orElseFail(Unauthorized())
                     secret <- Security.secret
-                    result <- ZIO
-                      .succeed(
-                        Token(JsonWebToken.encodeJwt(userId, user.role, secret))
-                      )
+                    result <- ZIO.succeed(Token(JsonWebToken.encodeJwt(userId, user.role, secret)))
                   } yield result
-                case false =>
-                  ZIO.fail(Unauthorized("Invalid password"))
+                case false => ZIO.fail(Unauthorized("Invalid password"))
               }
           }
       )

@@ -34,10 +34,10 @@ object ServiceError:
   type ClientError = NotFound | Unauthorized | BadRequest
 
   /** Гивены ZIO-схем ошибок сервиса. */
-  given Schema[ServiceError] = DeriveSchema.gen
+  given Schema[ServiceError]                     = DeriveSchema.gen
   given Schema[ServiceError.InternalServerError] = DeriveSchema.gen
-  given Schema[ServiceError.NotFound] = DeriveSchema.gen
-  given Schema[ServiceError.Unauthorized] = DeriveSchema.gen
-  given Schema[ServiceError.BadRequest] = DeriveSchema.gen
+  given Schema[ServiceError.NotFound]            = DeriveSchema.gen
+  given Schema[ServiceError.Unauthorized]        = DeriveSchema.gen
+  given Schema[ServiceError.BadRequest]          = DeriveSchema.gen
 
 end ServiceError

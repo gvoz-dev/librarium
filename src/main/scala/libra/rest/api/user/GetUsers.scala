@@ -28,22 +28,11 @@ object GetUsers:
     List[User],
     EndpointMiddleware.None
   ] =
-    Endpoint((RoutePattern.GET / path) ?? Doc.p("Endpoint for querying users"))
-      .query(
-        QueryCodec
-          .query("name")
-          .optional
-          ?? Doc.p("Query parameter to search users by name")
-      )
+    Endpoint((RoutePattern.GET / path) ?? Doc.p("Querying users"))
+      .query(QueryCodec.query("name").optional ?? Doc.p("Query parameter to search users by name"))
       .out[List[User]](Doc.p("List of users"))
-      .outError[NotFound](
-        Status.NotFound,
-        Doc.p("Users not found")
-      )
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
+      .outError[NotFound](Status.NotFound)
+      .outError[InternalServerError](Status.InternalServerError)
 
   /** Маршрут API получения пользователей. */
   val route: Route[UserRepository, Nothing] =

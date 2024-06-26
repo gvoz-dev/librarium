@@ -16,7 +16,7 @@ import java.util.UUID
 object CommentServiceTest extends ZIOSpecDefault:
 
   private def commentServiceSpec =
-    suite("Comment service & repo functions")(
+    suite("Comment service functions")(
       test("#findById should return comment if it exists") {
         for {
           comment <- CommentService.findById(UUID.fromString("3bde6a1f-3eb7-4f36-b4c0-422ab4f39e99"))
@@ -34,9 +34,10 @@ object CommentServiceTest extends ZIOSpecDefault:
       },
       test("#findById should fail if no comments exist") {
         for {
-          result <- CommentService
-            .findByUser(UUID.fromString("37d706ed-9591-4fd3-8811-9970194347da"))
-            .exit
+          result <-
+            CommentService
+              .findByUser(UUID.fromString("37d706ed-9591-4fd3-8811-9970194347da"))
+              .exit
         } yield assert(result)(fails(isSubtype[NotFound](anything)))
       },
       test("#findByBook should return 1 comment") {
@@ -49,9 +50,10 @@ object CommentServiceTest extends ZIOSpecDefault:
       },
       test("#findByBook should fail if no comments exist") {
         for {
-          result <- CommentService
-            .findByBook(UUID.fromString("eb98fd47-793e-448c-ad50-0a68d1f76252"))
-            .exit
+          result <-
+            CommentService
+              .findByBook(UUID.fromString("eb98fd47-793e-448c-ad50-0a68d1f76252"))
+              .exit
         } yield assert(result)(fails(isSubtype[NotFound](anything)))
       },
       test("#findByUserAndBook should return 1 comment") {
@@ -67,12 +69,13 @@ object CommentServiceTest extends ZIOSpecDefault:
       },
       test("#findByUserAndBook should fail if no comments exist") {
         for {
-          result <- CommentService
-            .findByUserAndBook(
-              UUID.fromString("ea962bb3-8f66-4256-bea5-8851c8f37dfb"),
-              UUID.fromString("eb98fd47-793e-448c-ad50-0a68d1f76252")
-            )
-            .exit
+          result <-
+            CommentService
+              .findByUserAndBook(
+                UUID.fromString("ea962bb3-8f66-4256-bea5-8851c8f37dfb"),
+                UUID.fromString("eb98fd47-793e-448c-ad50-0a68d1f76252")
+              )
+              .exit
         } yield assert(result)(fails(isSubtype[NotFound](anything)))
       },
       test("#create comment is correct") {
@@ -120,18 +123,19 @@ object CommentServiceTest extends ZIOSpecDefault:
       test("#delete comment is correct") {
         for {
           _      <- CommentService.delete(UUID.fromString("3bde6a1f-3eb7-4f36-b4c0-422ab4f39e99"))
-          result <- CommentService
-            .findByUserAndBook(
-              UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c"),
-              UUID.fromString("b43e5b87-a042-461b-8728-653eddced002")
-            )
-            .exit
+          result <-
+            CommentService
+              .findByUserAndBook(
+                UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c"),
+                UUID.fromString("b43e5b87-a042-461b-8728-653eddced002")
+              )
+              .exit
         } yield assert(result)(fails(isSubtype[NotFound](anything)))
       }
     )
 
   override def spec: Spec[TestEnvironment & Scope, Any] =
-    (suite("Comment service & repo tests")(
+    (suite("Comment service tests")(
       commentServiceSpec
     ) @@ DbMigrationAspect.migrate("db/migration")() @@ sequential)
       .provideShared(

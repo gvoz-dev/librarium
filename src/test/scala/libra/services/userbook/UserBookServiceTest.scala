@@ -12,7 +12,7 @@ import java.util.UUID
 object UserBookServiceTest extends ZIOSpecDefault:
 
   private def userBookServiceSpec =
-    suite("UserBook service & repo functions")(
+    suite("UserBook service functions")(
       test("#findUserBook should return id") {
         for {
           id <- UserBookService.findUserBook(
@@ -25,9 +25,8 @@ object UserBookServiceTest extends ZIOSpecDefault:
       },
       test("#libraryBooks should return all user's books") {
         for {
-          books <- UserBookService.libraryBooks(
-            UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c")
-          )
+          books <- UserBookService
+            .libraryBooks(UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c"))
         } yield assertTrue(
           books.nonEmpty,
           books.size == 1,
@@ -36,13 +35,12 @@ object UserBookServiceTest extends ZIOSpecDefault:
       },
       test("#addToLibrary should add book to the user's library") {
         for {
-          _ <- UserBookService.addToLibrary(
+          _     <- UserBookService.addToLibrary(
             UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c"),
             UUID.fromString("eb98fd47-793e-448c-ad50-0a68d1f76252")
           )
-          books <- UserBookService.libraryBooks(
-            UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c")
-          )
+          books <- UserBookService
+            .libraryBooks(UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c"))
         } yield assertTrue(
           books.size == 2,
           books.contains(
@@ -52,7 +50,7 @@ object UserBookServiceTest extends ZIOSpecDefault:
       },
       test("#setProgress & #getProgress should match") {
         for {
-          _ <- UserBookService.setProgress(
+          _        <- UserBookService.setProgress(
             UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c"),
             UUID.fromString("eb98fd47-793e-448c-ad50-0a68d1f76252"),
             95.0f
@@ -67,7 +65,7 @@ object UserBookServiceTest extends ZIOSpecDefault:
       },
       test("#setRating & #getRating & avgRating should match") {
         for {
-          _ <- UserBookService.setRating(
+          _      <- UserBookService.setRating(
             UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c"),
             UUID.fromString("eb98fd47-793e-448c-ad50-0a68d1f76252"),
             5
@@ -76,9 +74,8 @@ object UserBookServiceTest extends ZIOSpecDefault:
             UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c"),
             UUID.fromString("eb98fd47-793e-448c-ad50-0a68d1f76252")
           )
-          avg <- UserBookService.avgRating(
-            UUID.fromString("eb98fd47-793e-448c-ad50-0a68d1f76252")
-          )
+          avg    <- UserBookService
+            .avgRating(UUID.fromString("eb98fd47-793e-448c-ad50-0a68d1f76252"))
         } yield assertTrue(
           rating == 5,
           avg == 5.0f
@@ -86,13 +83,12 @@ object UserBookServiceTest extends ZIOSpecDefault:
       },
       test("#deleteFromLibrary should delete book from the user's library") {
         for {
-          _ <- UserBookService.deleteFromLibrary(
+          _     <- UserBookService.deleteFromLibrary(
             UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c"),
             UUID.fromString("eb98fd47-793e-448c-ad50-0a68d1f76252")
           )
-          books <- UserBookService.libraryBooks(
-            UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c")
-          )
+          books <- UserBookService
+            .libraryBooks(UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c"))
         } yield assertTrue(
           books.size == 1,
           !books.contains(
@@ -103,7 +99,7 @@ object UserBookServiceTest extends ZIOSpecDefault:
     )
 
   override def spec: Spec[TestEnvironment & Scope, Any] =
-    (suite("UserBook service & repo tests")(
+    (suite("UserBook service tests")(
       userBookServiceSpec
     ) @@ DbMigrationAspect.migrate("db/migration")() @@ sequential)
       .provideShared(

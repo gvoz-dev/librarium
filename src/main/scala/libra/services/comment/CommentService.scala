@@ -10,6 +10,17 @@ import java.util.UUID
 /** Сервис пользовательских комментариев к книгам. */
 object CommentService:
 
+  /** Получить все комментарии. */
+  def all: ZIO[CommentRepository, RepositoryError, List[Comment]] =
+    ZIO
+      .serviceWithZIO[CommentRepository](_.all)
+      .mapError(e => InternalServerError(e.getMessage))
+      .onError(e => ZIO.logError(s"Error:\n${e.prettyPrint}"))
+      .flatMap {
+        case Nil  => ZIO.fail(NotFound("Comments not found"))
+        case list => ZIO.succeed(list)
+      }
+
   /** Найти комментарий по ID.
     *
     * @param id

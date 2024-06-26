@@ -6,6 +6,8 @@ import libra.services.*
 import libra.utils.ServiceError.*
 import zio.ZIO
 
+import java.util.UUID
+
 /** Сервис авторов. */
 object AuthorService:
 
@@ -23,10 +25,10 @@ object AuthorService:
   /** Найти автора по ID.
     *
     * @param id
-    *   уникальный идентификатор автора (строка UUID).
+    *   уникальный идентификатор автора
     */
   def findById(
-      id: String
+      id: UUID
   ): ZIO[AuthorRepository, RepositoryError, Author] =
     ZIO
       .serviceWithZIO[AuthorRepository](_.findById(id))
@@ -67,7 +69,7 @@ object AuthorService:
         .serviceWithZIO[AuthorRepository](_.create(author))
         .mapError(e => InternalServerError(e.getMessage))
         .onError(e => ZIO.logError(s"$author not created:\n${e.prettyPrint}"))
-      _ <- ZIO.logInfo(s"$result created")
+      _      <- ZIO.logInfo(s"$result created")
     } yield result
 
   /** Изменить автора.
@@ -83,24 +85,22 @@ object AuthorService:
         .serviceWithZIO[AuthorRepository](_.update(author))
         .mapError(e => InternalServerError(e.getMessage))
         .onError(e => ZIO.logError(s"$author not updated:\n${e.prettyPrint}"))
-      _ <- ZIO.logInfo(s"$result updated")
+      _      <- ZIO.logInfo(s"$result updated")
     } yield result
 
   /** Удалить автора.
     *
     * @param id
-    *   уникальный идентификатор автора (строка UUID).
+    *   уникальный идентификатор автора
     */
   def delete(
-      id: String
+      id: UUID
   ): ZIO[AuthorRepository, InternalServerError, Unit] =
     for {
       _ <- ZIO
         .serviceWithZIO[AuthorRepository](_.delete(id))
         .mapError(e => InternalServerError(e.getMessage))
-        .onError(e =>
-          ZIO.logError(s"Author ($id) not deleted:\n${e.prettyPrint}")
-        )
+        .onError(e => ZIO.logError(s"Author ($id) not deleted:\n${e.prettyPrint}"))
       _ <- ZIO.logInfo(s"Author ($id) deleted")
     } yield ()
 

@@ -31,9 +31,7 @@ object PutBook:
     Book,
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.PUT / path) ?? Doc.p("Endpoint for updating book")
-    )
+    Endpoint((RoutePattern.PUT / path) ?? Doc.p("Updating book"))
       .header(authHeader)
       .in[Book](Doc.p("Book"))
       .examplesIn(
@@ -60,14 +58,8 @@ object PutBook:
         )
       )
       .out[Book](Doc.p("Updated book"))
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
-      .outError[Unauthorized](
-        Status.Unauthorized,
-        Doc.p("Authorization error")
-      )
+      .outError[InternalServerError](Status.InternalServerError)
+      .outError[Unauthorized](Status.Unauthorized)
 
   /** Маршрут API изменения книги. */
   val route: Route[BookRepository & SecurityConfig, Nothing] =

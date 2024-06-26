@@ -52,10 +52,7 @@ object RestRoutes:
       GetRating.endpoint,
       PostRating.endpoint,
       // Comments
-      GetCommentById.endpoint,
-      GetUserComments.endpoint,
-      GetCommentsOnBook.endpoint,
-      GetUserCommentsOnBook.endpoint,
+      GetComments.endpoint,
       GetCommentById.endpoint,
       PostComment.endpoint,
       PutComment.endpoint,
@@ -102,10 +99,7 @@ object RestRoutes:
       GetRating.route,
       PostRating.route,
       // Comments
-      GetCommentById.route,
-      GetUserComments.route,
-      GetCommentsOnBook.route,
-      GetUserCommentsOnBook.route,
+      GetComments.route,
       GetCommentById.route,
       PostComment.route,
       PutComment.route,

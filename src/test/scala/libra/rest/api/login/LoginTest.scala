@@ -15,8 +15,8 @@ import zio.test.TestAspect.sequential
 object LoginTest extends ZIOSpecDefault:
 
   def spec: Spec[TestEnvironment & Scope, Any] =
-    (suite("Login endpoint") {
-      test("Test auth") {
+    (suite("Login endpoint tests") {
+      test("#auth is correct") {
         for {
           client <- ZIO.service[Client]
           port   <- ZIO.serviceWith[Server](_.port)
@@ -45,7 +45,7 @@ object LoginTest extends ZIOSpecDefault:
         LibraPostgresContainer.live,
         ZPostgreSQLContainer.live,
         TestRepoLayers.userRepoLayer,
-        TestSecurityConfig.securityConfig
+        TestSecurityConfig.live
       )
 
 end LoginTest

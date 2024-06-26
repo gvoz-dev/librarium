@@ -28,19 +28,10 @@ object GetAvgRating:
     AvgRating,
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.GET / path)
-        ?? Doc.p("Endpoint for querying average rating")
-    )
+    Endpoint((RoutePattern.GET / path) ?? Doc.p("Querying average book rating"))
       .out[AvgRating](Doc.p("Average rating"))
-      .outError[NotFound](
-        Status.NotFound,
-        Doc.p("Not found error")
-      )
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
+      .outError[NotFound](Status.NotFound)
+      .outError[InternalServerError](Status.InternalServerError)
 
   /** Маршрут API получения среднего рейтинга книги. */
   val route: Route[UserBookRepository, Nothing] =

@@ -29,9 +29,7 @@ object PostBook:
     Book,
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.POST / path) ?? Doc.p("Endpoint for creating book")
-    )
+    Endpoint((RoutePattern.POST / path) ?? Doc.p("Creating book"))
       .header(authHeader)
       .in[Book](Doc.p("Book"))
       .examplesIn(
@@ -57,15 +55,9 @@ object PostBook:
           )
         )
       )
-      .out[Book](Doc.p("Created book"))
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
-      .outError[Unauthorized](
-        Status.Unauthorized,
-        Doc.p("Authorization error")
-      )
+      .out[Book](Status.Created, Doc.p("Created book"))
+      .outError[InternalServerError](Status.InternalServerError)
+      .outError[Unauthorized](Status.Unauthorized)
 
   /** Маршрут API добавления книги. */
   val route: Route[BookRepository & SecurityConfig, Nothing] =

@@ -28,16 +28,10 @@ object GetCommentById:
     Comment,
     EndpointMiddleware.None
   ] =
-    Endpoint((RoutePattern.GET / path) ?? Doc.p("Endpoint for querying comment by ID"))
+    Endpoint((RoutePattern.GET / path) ?? Doc.p("Querying comment by ID"))
       .out[Comment](Doc.p("Comment"))
-      .outError[NotFound](
-        Status.NotFound,
-        Doc.p("Not found error")
-      )
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
+      .outError[NotFound](Status.NotFound)
+      .outError[InternalServerError](Status.InternalServerError)
 
   /** Маршрут API получения комментария по идентификатору. */
   val route: Route[CommentRepository, Nothing] =

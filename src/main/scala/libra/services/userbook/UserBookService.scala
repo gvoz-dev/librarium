@@ -61,12 +61,8 @@ object UserBookService:
       result <- ZIO
         .serviceWithZIO[UserBookRepository](_.addToLibrary(userId, bookId))
         .mapError(e => InternalServerError(e.getMessage))
-        .onError(e =>
-          ZIO.logError(
-            s"Book ($bookId) not added to lib ($userId):\n${e.prettyPrint}"
-          )
-        )
-      _ <- ZIO.logInfo(s"Book ($bookId) added to lib ($userId)")
+        .onError(e => ZIO.logError(s"Book ($bookId) not added to lib ($userId):\n${e.prettyPrint}"))
+      _      <- ZIO.logInfo(s"Book ($bookId) added to lib ($userId)")
     } yield result
 
   /** Удалить книгу из библиотеки пользователя.
@@ -84,11 +80,7 @@ object UserBookService:
       _ <- ZIO
         .serviceWithZIO[UserBookRepository](_.deleteFromLibrary(userId, bookId))
         .mapError(e => InternalServerError(e.getMessage))
-        .onError(e =>
-          ZIO.logError(
-            s"Book ($bookId) not deleted from lib ($userId):\n${e.prettyPrint}"
-          )
-        )
+        .onError(e => ZIO.logError(s"Book ($bookId) not deleted from lib ($userId):\n${e.prettyPrint}"))
       _ <- ZIO.logInfo(s"Book ($bookId) deleted from lib ($userId)")
     } yield ()
 
@@ -128,12 +120,10 @@ object UserBookService:
   ): ZIO[UserBookRepository, InternalServerError, Unit] =
     for {
       result <- ZIO
-        .serviceWithZIO[UserBookRepository](
-          _.setProgress(userId, bookId, progress)
-        )
+        .serviceWithZIO[UserBookRepository](_.setProgress(userId, bookId, progress))
         .mapError(e => InternalServerError(e.getMessage))
         .onError(e => ZIO.logError(s"Progress not set:\n${e.prettyPrint}"))
-      _ <- ZIO.logInfo(s"Progress $progress set ($userId, $bookId)")
+      _      <- ZIO.logInfo(s"Progress $progress set ($userId, $bookId)")
     } yield result
 
   /** Получить среднее значение рейтинга книги.
@@ -192,7 +182,7 @@ object UserBookService:
         .serviceWithZIO[UserBookRepository](_.setRating(userId, bookId, rating))
         .mapError(e => InternalServerError(e.getMessage))
         .onError(e => ZIO.logError(s"Rating not set:\n${e.prettyPrint}"))
-      _ <- ZIO.logInfo(s"Rating $rating set ($userId, $bookId)")
+      _      <- ZIO.logInfo(s"Rating $rating set ($userId, $bookId)")
     } yield result
 
 end UserBookService

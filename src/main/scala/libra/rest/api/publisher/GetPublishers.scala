@@ -28,24 +28,11 @@ object GetPublishers:
     List[Publisher],
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.GET / path) ?? Doc.p("Endpoint for querying publishers")
-    )
-      .query(
-        QueryCodec
-          .query("name")
-          .optional
-          ?? Doc.p("Query parameter to search publishers by name")
-      )
+    Endpoint((RoutePattern.GET / path) ?? Doc.p("Querying publishers"))
+      .query(QueryCodec.query("name").optional ?? Doc.p("Query parameter to search publishers by name"))
       .out[List[Publisher]](Doc.p("List of publishers"))
-      .outError[NotFound](
-        Status.NotFound,
-        Doc.p("Not found error")
-      )
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
+      .outError[NotFound](Status.NotFound)
+      .outError[InternalServerError](Status.InternalServerError)
 
   /** Маршрут API получения издателей. */
   val route: Route[PublisherRepository, Nothing] =

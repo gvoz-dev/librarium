@@ -17,7 +17,7 @@ import java.util.UUID
 object AuthorServiceTest extends ZIOSpecDefault:
 
   private def authorServiceSpec =
-    suite("Author service & repo functions")(
+    suite("Author service functions")(
       test("#all should return 3 authors") {
         for {
           authors <- AuthorService.all
@@ -28,9 +28,8 @@ object AuthorServiceTest extends ZIOSpecDefault:
       },
       test("#findById should return the author if it exists") {
         for {
-          author <- AuthorService.findById(
-            "0584125f-74e9-4b2b-92e2-e7396803aaba"
-          )
+          author <- AuthorService
+            .findById(UUID.fromString("0584125f-74e9-4b2b-92e2-e7396803aaba"))
         } yield assertTrue(
           author.name == "Donald Knuth"
         )
@@ -38,9 +37,7 @@ object AuthorServiceTest extends ZIOSpecDefault:
       test("#findById should fail if the author does not exist") {
         for {
           result <- AuthorService
-            .findById(
-              "37d706ed-9591-4fd3-8811-9970194347da"
-            )
+            .findById(UUID.fromString("37d706ed-9591-4fd3-8811-9970194347da"))
             .exit
         } yield assert(result)(fails(isSubtype[NotFound](anything)))
       },
@@ -60,10 +57,10 @@ object AuthorServiceTest extends ZIOSpecDefault:
         } yield assert(result)(fails(isSubtype[NotFound](anything)))
       },
       test("#create author is correct") {
-        val author = Author(None, "Gvozdev Roman", Some("Russia"))
+        val author = Author(None, "Roman", Some("Russia"))
         for {
           inserted <- AuthorService.create(author)
-          selected <- AuthorService.findByName("Gvozdev Roman")
+          selected <- AuthorService.findByName("Roman")
         } yield assertTrue(
           selected.nonEmpty,
           selected.head.id == inserted.id
@@ -82,15 +79,15 @@ object AuthorServiceTest extends ZIOSpecDefault:
       },
       test("#delete author is correct") {
         for {
-          authors <- AuthorService.findByName("Gvozdev Roman")
-          _       <- AuthorService.delete(authors.head.id.map(_.toString).get)
-          result  <- AuthorService.findByName("Gvozdev Roman").exit
+          authors <- AuthorService.findByName("Roman")
+          _       <- AuthorService.delete(authors.head.id.get)
+          result  <- AuthorService.findByName("Roman").exit
         } yield assert(result)(fails(isSubtype[NotFound](anything)))
       }
     )
 
   override def spec: Spec[TestEnvironment & Scope, Any] =
-    (suite("Author service & repo tests")(
+    (suite("Author service tests")(
       authorServiceSpec
     ) @@ DbMigrationAspect.migrate("db/migration")() @@ sequential)
       .provideShared(

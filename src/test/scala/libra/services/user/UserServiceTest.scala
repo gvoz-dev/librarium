@@ -17,7 +17,7 @@ import java.util.UUID
 object UserServiceTest extends ZIOSpecDefault:
 
   private def userServiceSpec =
-    suite("User service & repo functions")(
+    suite("User service functions")(
       test("#all should return 2 users") {
         for {
           users <- UserService.all
@@ -28,9 +28,8 @@ object UserServiceTest extends ZIOSpecDefault:
       },
       test("#findById should return the user if it exists") {
         for {
-          user <- UserService.findById(
-            "ea962bb3-8f66-4256-bea5-8851c8f37dfb"
-          )
+          user <- UserService
+            .findById(UUID.fromString("ea962bb3-8f66-4256-bea5-8851c8f37dfb"))
         } yield assertTrue(
           user.name == "admin"
         )
@@ -38,9 +37,7 @@ object UserServiceTest extends ZIOSpecDefault:
       test("#findById should fail if the user does not exist") {
         for {
           result <- UserService
-            .findById(
-              "37d706ed-9591-4fd3-8811-9970194347da"
-            )
+            .findById(UUID.fromString("37d706ed-9591-4fd3-8811-9970194347da"))
             .exit
         } yield assert(result)(fails(isSubtype[NotFound](anything)))
       },
@@ -71,7 +68,7 @@ object UserServiceTest extends ZIOSpecDefault:
         } yield assert(result)(fails(isSubtype[NotFound](anything)))
       },
       test("#create user is correct") {
-        val user = User(None, "tester", "tester@example.com", "test", "user")
+        val user = User(None, "tester", "tester@example.com", "test")
         for {
           inserted <- UserService.create(user)
           selected <- UserService.findByName("tester")
@@ -83,9 +80,9 @@ object UserServiceTest extends ZIOSpecDefault:
       test("#update user is correct") {
         val uuid = UUID.fromString("ca3e509d-06cf-4655-802a-7f8355339e2c")
         val user =
-          User(Some(uuid), "gvoz-dev", "roman@example.com", "qwerty", "user")
+          User(Some(uuid), "gvoz-dev", "roman@example.com", "qwerty")
         for {
-          updated <- UserService.update(user)
+          updated  <- UserService.update(user)
           selected <- UserService.findByName("gvoz-dev")
         } yield assertTrue(
           selected.nonEmpty,
@@ -94,15 +91,15 @@ object UserServiceTest extends ZIOSpecDefault:
       },
       test("#delete user is correct") {
         for {
-          users <- UserService.findByName("tester")
-          _ <- UserService.delete(users.head.id.map(_.toString).get)
+          users  <- UserService.findByName("tester")
+          _      <- UserService.delete(users.head.id.get)
           result <- UserService.findByName("tester").exit
         } yield assert(result)(fails(isSubtype[NotFound](anything)))
       }
     )
 
   override def spec: Spec[TestEnvironment & Scope, Any] =
-    (suite("User service & repo tests")(
+    (suite("User service tests")(
       userServiceSpec
     ) @@ DbMigrationAspect.migrate("db/migration")() @@ sequential)
       .provideShared(

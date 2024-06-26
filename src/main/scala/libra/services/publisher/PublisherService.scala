@@ -5,6 +5,8 @@ import libra.repositories.publisher.PublisherRepository
 import libra.utils.ServiceError.*
 import zio.ZIO
 
+import java.util.UUID
+
 /** Сервис издателей. */
 object PublisherService:
 
@@ -22,17 +24,17 @@ object PublisherService:
   /** Найти издателя по ID.
     *
     * @param id
-    *   уникальный идентификатор издателя (строка UUID).
+    *   уникальный идентификатор издателя
     */
   def findById(
-      id: String
+      id: UUID
   ): ZIO[PublisherRepository, RepositoryError, Publisher] =
     ZIO
       .serviceWithZIO[PublisherRepository](_.findById(id))
       .mapError(e => InternalServerError(e.getMessage))
       .onError(e => ZIO.logError(s"Error:\n${e.prettyPrint}"))
       .flatMap {
-        case None => ZIO.fail(NotFound(s"Publisher not found by ID: $id"))
+        case None         => ZIO.fail(NotFound(s"Publisher not found by ID: $id"))
         case Some(author) => ZIO.succeed(author)
       }
 
@@ -65,10 +67,8 @@ object PublisherService:
       result <- ZIO
         .serviceWithZIO[PublisherRepository](_.create(publisher))
         .mapError(e => InternalServerError(e.getMessage))
-        .onError(e =>
-          ZIO.logError(s"$publisher not created:\n${e.prettyPrint}")
-        )
-      _ <- ZIO.logInfo(s"$result created")
+        .onError(e => ZIO.logError(s"$publisher not created:\n${e.prettyPrint}"))
+      _      <- ZIO.logInfo(s"$result created")
     } yield result
 
   /** Изменить издателя.
@@ -83,27 +83,23 @@ object PublisherService:
       result <- ZIO
         .serviceWithZIO[PublisherRepository](_.update(publisher))
         .mapError(e => InternalServerError(e.getMessage))
-        .onError(e =>
-          ZIO.logError(s"$publisher not updated:\n${e.prettyPrint}")
-        )
-      _ <- ZIO.logInfo(s"$result updated")
+        .onError(e => ZIO.logError(s"$publisher not updated:\n${e.prettyPrint}"))
+      _      <- ZIO.logInfo(s"$result updated")
     } yield result
 
   /** Удалить издателя.
     *
     * @param id
-    *   уникальный идентификатор издателя (строка UUID).
+    *   уникальный идентификатор издателя
     */
   def delete(
-      id: String
+      id: UUID
   ): ZIO[PublisherRepository, InternalServerError, Unit] =
     for {
       _ <- ZIO
         .serviceWithZIO[PublisherRepository](_.delete(id))
         .mapError(e => InternalServerError(e.getMessage))
-        .onError(e =>
-          ZIO.logError(s"Publisher ($id) not deleted:\n${e.prettyPrint}")
-        )
+        .onError(e => ZIO.logError(s"Publisher ($id) not deleted:\n${e.prettyPrint}"))
       _ <- ZIO.logInfo(s"Publisher ($id) deleted")
     } yield ()
 

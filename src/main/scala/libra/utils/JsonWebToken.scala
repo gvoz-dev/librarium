@@ -28,7 +28,7 @@ object JsonWebToken:
         .about(userId.toString)
         .+("role", userRole)
         .issuedNow
-        .expiresIn(36000), // В целях тестирования токен действует 10 часов
+        .expiresIn(36000), // TODO: В целях тестирования токен действует 10 часов
       secretKey,
       JwtAlgorithm.HS256
     )
@@ -101,6 +101,6 @@ object JsonWebToken:
     *   идентификатор владельца ресурса
     */
   def checkTokenPermissions(payload: Payload, ownerId: String): Boolean =
-    payload.subject == ownerId || payload.content.role == "admin"
+    payload.subject == ownerId || payload.content.role == "admin" // TODO: Временная реализация
 
 end JsonWebToken

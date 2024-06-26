@@ -3,6 +3,8 @@ package libra.repositories.author
 import libra.entities.Author
 import zio.*
 
+import java.util.UUID
+
 /** Репозиторий авторов. */
 trait AuthorRepository:
 
@@ -12,9 +14,9 @@ trait AuthorRepository:
   /** Найти автора по ID.
     *
     * @param id
-    *   уникальный идентификатор автора (строка UUID).
+    *   уникальный идентификатор автора
     */
-  def findById(id: String): Task[Option[Author]]
+  def findById(id: UUID): Task[Option[Author]]
 
   /** Найти авторов по имени.
     *
@@ -40,8 +42,8 @@ trait AuthorRepository:
   /** Удалить автора.
     *
     * @param id
-    *   уникальный идентификатор автора (строка UUID).
+    *   уникальный идентификатор автора
     */
-  def delete(id: String): Task[Unit]
+  def delete(id: UUID): Task[Unit]
 
 end AuthorRepository

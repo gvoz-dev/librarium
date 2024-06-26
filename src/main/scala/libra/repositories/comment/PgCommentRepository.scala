@@ -32,6 +32,16 @@ case class PgCommentRepository(ds: DataSource) extends CommentRepository:
         row.lastModifiedTime
       )
 
+  /** Получить все комментарии. */
+  override def all: Task[List[Comment]] =
+    run {
+      quote {
+        query[Comments]
+          .map(toComment)
+      }
+    }.provide(dsLayer)
+  end all
+
   /** Найти комментарий по ID.
     *
     * @param id

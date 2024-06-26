@@ -5,6 +5,8 @@ import libra.repositories.book.BookRepository
 import libra.utils.ServiceError.*
 import zio.ZIO
 
+import java.util.UUID
+
 /** Сервис книг. */
 object BookService:
 
@@ -22,10 +24,10 @@ object BookService:
   /** Найти книгу по ID.
     *
     * @param id
-    *   уникальный идентификатор книги (строка UUID).
+    *   уникальный идентификатор книги
     */
   def findById(
-      id: String
+      id: UUID
   ): ZIO[BookRepository, RepositoryError, Book] =
     ZIO
       .serviceWithZIO[BookRepository](_.findById(id))
@@ -66,7 +68,7 @@ object BookService:
         .serviceWithZIO[BookRepository](_.create(book))
         .mapError(e => InternalServerError(e.getMessage))
         .onError(e => ZIO.logError(s"$book not created:\n${e.prettyPrint}"))
-      _ <- ZIO.logInfo(s"$result created")
+      _      <- ZIO.logInfo(s"$result created")
     } yield result
 
   /** Изменить книгу.
@@ -82,24 +84,22 @@ object BookService:
         .serviceWithZIO[BookRepository](_.update(book))
         .mapError(e => InternalServerError(e.getMessage))
         .onError(e => ZIO.logError(s"$book not updated:\n${e.prettyPrint}"))
-      _ <- ZIO.logInfo(s"$result updated")
+      _      <- ZIO.logInfo(s"$result updated")
     } yield result
 
   /** Удалить книгу.
     *
     * @param id
-    *   уникальный идентификатор книги (строка UUID).
+    *   уникальный идентификатор книги
     */
   def delete(
-      id: String
+      id: UUID
   ): ZIO[BookRepository, InternalServerError, Unit] =
     for {
       _ <- ZIO
         .serviceWithZIO[BookRepository](_.delete(id))
         .mapError(e => InternalServerError(e.getMessage))
-        .onError(e =>
-          ZIO.logError(s"Book ($id) not deleted:\n${e.prettyPrint}")
-        )
+        .onError(e => ZIO.logError(s"Book ($id) not deleted:\n${e.prettyPrint}"))
       _ <- ZIO.logInfo(s"Book ($id) deleted")
     } yield ()
 

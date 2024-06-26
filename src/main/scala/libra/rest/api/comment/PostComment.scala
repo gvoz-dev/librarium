@@ -7,7 +7,6 @@ import libra.repositories.userbook.UserBookRepository
 import libra.rest.api.authHeader
 import libra.services.comment.CommentService
 import libra.utils.*
-import libra.utils.JsonWebToken.*
 import libra.utils.ServiceError.*
 import zio.*
 import zio.http.*
@@ -33,7 +32,7 @@ object PostComment:
     Comment,
     EndpointMiddleware.None
   ] =
-    Endpoint((RoutePattern.POST / path) ?? Doc.p("Endpoint for creating comment"))
+    Endpoint((RoutePattern.POST / path) ?? Doc.p("Creating comment"))
       .header(authHeader)
       .in[Comment](Doc.p("Comment"))
       .examplesIn(
@@ -54,27 +53,18 @@ object PostComment:
         )
       )
       .out[Comment](Status.Created)
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
-      .outError[Unauthorized](
-        Status.Unauthorized,
-        Doc.p("Authorization error")
-      )
+      .outError[InternalServerError](Status.InternalServerError)
+      .outError[Unauthorized](Status.Unauthorized)
 
   /** Маршрут API добавления комментария. */
-  val route: Route[
-    UserBookRepository & CommentRepository & SecurityConfig,
-    Nothing
-  ] =
+  val route: Route[UserBookRepository & CommentRepository & SecurityConfig, Nothing] =
     endpoint.implement(
       handler((token: String, comment: Comment) =>
         for {
           secret <- Security.secret
-          claim  <- validateJwt(token, secret).mapError(Left(_))
+          claim  <- JsonWebToken.validateJwt(token, secret).mapError(Left(_))
           result <-
-            if checkTokenPermissions(claim, comment.userId.toString) then
+            if JsonWebToken.checkTokenPermissions(claim, comment.userId.toString) then
               CommentService.create(comment).mapError(Right(_))
             else ZIO.fail(Left(Unauthorized("No permission")))
         } yield result

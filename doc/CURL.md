@@ -112,7 +112,9 @@ curl -i -X PUT \
 ### HTTP-запрос для удаления книги
 
 ```bash
-curl -i -X DELETE "http://127.0.0.1:8080/api/v1/books/???"
+curl -i -X DELETE \
+-H 'X-JWT-Auth: ???' \
+'http://127.0.0.1:8080/api/v1/books/???'
 ```
 
 ----
@@ -193,31 +195,19 @@ curl -i -X POST \
 
 ## Comments
 
+### HTTP-запрос для поиска комментариев
+
+```bash
+curl -i -X GET 'http://127.0.0.1:8080/api/v1/comments'
+```
+
 ### HTTP-запрос для поиска комментария по ID
 
 ```bash
 curl -i -X GET 'http://127.0.0.1:8080/api/v1/comments/???'
 ```
 
-### HTTP-запрос для поиска комментариев пользователя
-
-```bash
-curl -i -X GET 'http://127.0.0.1:8080/api/v1/comments/user/???'
-```
-
-### HTTP-запрос для поиска комментариев к книге
-
-```bash
-curl -i -X GET 'http://127.0.0.1:8080/api/v1/comments/book/???'
-```
-
-### HTTP-запрос для поиска комментариев пользователя к книге
-
-```bash
-curl -i -X GET 'http://127.0.0.1:8080/api/v1/comments/???/???'
-```
-
-### HTTP-запрос для добавления комментария к книге
+### HTTP-запрос для добавления комментария
 
 ```bash
 curl -i -X POST \
@@ -227,14 +217,22 @@ curl -i -X POST \
 'http://127.0.0.1:8080/api/v1/comments'
 ```
 
-### HTTP-запрос для изменения комментария к книге
+### HTTP-запрос для изменения комментария
 
 ```bash
 curl -i -X PUT \
 -H 'Content-Type: application/json' \
 -H 'X-JWT-Auth: ???' \
--d '{"text":"WOW","userId":"???","bookId":"???","isPrivate":true}' \
+-d '{"id":"???","userId":"???","bookId":"???","text":"WOW","isPrivate":true}' \
 'http://127.0.0.1:8080/api/v1/comments'
+```
+
+### HTTP-запрос для удаления комментария
+
+```bash
+curl -i -X DELETE \
+-H 'X-JWT-Auth: ???' \
+'http://127.0.0.1:8080/api/v1/comments/???'
 ```
 
 ----

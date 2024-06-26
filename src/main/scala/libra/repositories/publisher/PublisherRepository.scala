@@ -3,6 +3,8 @@ package libra.repositories.publisher
 import libra.entities.Publisher
 import zio.*
 
+import java.util.UUID
+
 /** Репозиторий издателей. */
 trait PublisherRepository:
 
@@ -12,9 +14,9 @@ trait PublisherRepository:
   /** Найти издателя по ID.
     *
     * @param id
-    *   уникальный идентификатор издателя (строка UUID).
+    *   уникальный идентификатор издателя
     */
-  def findById(id: String): Task[Option[Publisher]]
+  def findById(id: UUID): Task[Option[Publisher]]
 
   /** Найти издателей по названию.
     *
@@ -40,8 +42,8 @@ trait PublisherRepository:
   /** Удалить издателя.
     *
     * @param id
-    *   уникальный идентификатор издателя (строка UUID).
+    *   уникальный идентификатор издателя
     */
-  def delete(id: String): Task[Unit]
+  def delete(id: UUID): Task[Unit]
 
 end PublisherRepository

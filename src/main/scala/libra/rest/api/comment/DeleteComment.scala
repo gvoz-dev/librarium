@@ -5,7 +5,6 @@ import libra.repositories.comment.CommentRepository
 import libra.rest.api.authHeader
 import libra.services.comment.CommentService
 import libra.utils.*
-import libra.utils.JsonWebToken.*
 import libra.utils.ServiceError.*
 import zio.*
 import zio.http.*
@@ -31,21 +30,12 @@ object DeleteComment:
     Unit,
     EndpointMiddleware.None
   ] =
-    Endpoint((RoutePattern.DELETE / path) ?? Doc.p("Endpoint for deleting comment"))
+    Endpoint((RoutePattern.DELETE / path) ?? Doc.p("Deleting comment"))
       .header(authHeader)
       .out[Unit](Status.NoContent)
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
-      .outError[Unauthorized](
-        Status.Unauthorized,
-        Doc.p("Authorization error")
-      )
-      .outError[BadRequest](
-        Status.BadRequest,
-        Doc.p("Invalid comment")
-      )
+      .outError[InternalServerError](Status.InternalServerError)
+      .outError[Unauthorized](Status.Unauthorized)
+      .outError[BadRequest](Status.BadRequest)
 
   /** Маршрут API удаления комментария. */
   val route: Route[CommentRepository & SecurityConfig, Nothing] =
@@ -53,12 +43,13 @@ object DeleteComment:
       handler((id: UUID, token: String) =>
         for {
           secret  <- Security.secret
-          claim   <- validateJwt(token, secret).mapError(err => Right(Left(err)))
-          comment <- CommentService
-            .findById(id)
-            .orElseFail(Left(BadRequest("Comment does not exist")))
+          claim   <- JsonWebToken.validateJwt(token, secret).mapError(err => Right(Left(err)))
+          comment <-
+            CommentService
+              .findById(id)
+              .orElseFail(Left(BadRequest("Comment does not exist")))
           _       <-
-            if checkTokenPermissions(claim, comment.userId.toString) then
+            if JsonWebToken.checkTokenPermissions(claim, comment.userId.toString) then
               CommentService
                 .delete(id)
                 .mapError(err => Right(Right(err)))

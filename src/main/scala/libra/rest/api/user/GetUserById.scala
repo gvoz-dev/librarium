@@ -11,39 +11,33 @@ import zio.http.codec.*
 import zio.http.codec.PathCodec.*
 import zio.http.endpoint.*
 
+import java.util.UUID
+
 /** API получения пользователя по идентификатору.
   *
   *   - GET /api/v1/users/{id}
   */
 object GetUserById:
 
-  private val path = "api" / "v1" / "users" / PathCodec.string("userId")
+  private val path = "api" / "v1" / "users" / PathCodec.uuid("userId")
 
   /** Конечная точка API получения пользователя по идентификатору. */
   val endpoint: Endpoint[
-    String,
-    String,
+    UUID,
+    UUID,
     Either[InternalServerError, NotFound],
     User,
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.GET / path) ?? Doc.p("Endpoint for querying user by ID")
-    )
+    Endpoint((RoutePattern.GET / path) ?? Doc.p("Querying user by ID"))
       .out[User](Doc.p("User"))
-      .outError[NotFound](
-        Status.NotFound,
-        Doc.p("User not found")
-      )
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
+      .outError[NotFound](Status.NotFound)
+      .outError[InternalServerError](Status.InternalServerError)
 
   /** Маршрут API получения пользователя по идентификатору. */
   val route: Route[UserRepository, Nothing] =
     endpoint.implement(
-      handler((userId: String) =>
+      handler((userId: UUID) =>
         UserService
           .findById(userId)
           .mapError {

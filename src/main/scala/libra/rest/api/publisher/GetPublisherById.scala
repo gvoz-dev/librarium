@@ -11,40 +11,33 @@ import zio.http.codec.*
 import zio.http.codec.PathCodec.*
 import zio.http.endpoint.*
 
+import java.util.UUID
+
 /** API получения издателя по идентификатору.
   *
   *   - GET /api/v1/publishers/{id}
   */
 object GetPublisherById:
 
-  private val path = "api" / "v1" / "publishers" / PathCodec.string("id")
+  private val path = "api" / "v1" / "publishers" / PathCodec.uuid("id")
 
   /** Конечная точка API получения издателя по идентификатору. */
   val endpoint: Endpoint[
-    String,
-    String,
+    UUID,
+    UUID,
     Either[InternalServerError, NotFound],
     Publisher,
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.GET / path)
-        ?? Doc.p("Endpoint for querying publisher by ID")
-    )
+    Endpoint((RoutePattern.GET / path) ?? Doc.p("Querying publisher by ID"))
       .out[Publisher](Doc.p("Publisher"))
-      .outError[NotFound](
-        Status.NotFound,
-        Doc.p("Not found error")
-      )
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
+      .outError[NotFound](Status.NotFound)
+      .outError[InternalServerError](Status.InternalServerError)
 
   /** Маршрут API получения издателя по идентификатору. */
   val route: Route[PublisherRepository, Nothing] =
     endpoint.implement(
-      handler((id: String) =>
+      handler((id: UUID) =>
         PublisherService
           .findById(id)
           .mapError {

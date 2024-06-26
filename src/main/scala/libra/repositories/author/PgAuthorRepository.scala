@@ -7,7 +7,6 @@ import zio.*
 
 import java.util.UUID
 import javax.sql.DataSource
-import scala.util.Try
 
 /** Реализация репозитория авторов для СУБД PostgreSQL.
   *
@@ -58,19 +57,16 @@ case class PgAuthorRepository(ds: DataSource) extends AuthorRepository:
   /** Найти автора по ID.
     *
     * @param id
-    *   уникальный идентификатор автора (строка UUID).
+    *   уникальный идентификатор автора
     */
-  override def findById(id: String): Task[Option[Author]] =
-    for {
-      uuid <- ZIO.fromTry(Try(UUID.fromString(id)))
-      result <- run {
-        quote {
-          query[Authors]
-            .filter(a => a.id == lift(uuid))
-            .map(toAuthor)
-        }
-      }.map(_.headOption).provide(dsLayer)
-    } yield result
+  override def findById(id: UUID): Task[Option[Author]] =
+    run {
+      quote {
+        query[Authors]
+          .filter(a => a.id == lift(id))
+          .map(toAuthor)
+      }
+    }.map(_.headOption).provide(dsLayer)
   end findById
 
   /** Найти авторов по имени.
@@ -95,14 +91,15 @@ case class PgAuthorRepository(ds: DataSource) extends AuthorRepository:
     */
   override def create(author: Author): Task[Author] =
     for {
-      id <- Random.nextUUID
-      result <- run {
-        quote {
-          query[Authors]
-            .insertValue(toAuthorsRow(id, author))
-            .returning(toAuthor)
-        }
-      }.provide(dsLayer)
+      id     <- Random.nextUUID
+      result <-
+        run {
+          quote {
+            query[Authors]
+              .insertValue(toAuthorsRow(id, author))
+              .returning(toAuthor)
+          }
+        }.provide(dsLayer)
     } yield result
   end create
 
@@ -113,45 +110,45 @@ case class PgAuthorRepository(ds: DataSource) extends AuthorRepository:
     */
   override def update(author: Author): Task[Author] =
     for {
-      id <- ZIO.getOrFail(author.id)
-      result <- run {
-        quote {
-          query[Authors]
-            .filter(a => a.id == lift(id))
-            .updateValue(toAuthorsRow(id, author))
-            .returning(toAuthor)
-        }
-      }.provide(dsLayer)
+      id     <- ZIO.getOrFail(author.id)
+      result <-
+        run {
+          quote {
+            query[Authors]
+              .filter(a => a.id == lift(id))
+              .updateValue(toAuthorsRow(id, author))
+              .returning(toAuthor)
+          }
+        }.provide(dsLayer)
     } yield result
   end update
 
   /** Удалить автора.
     *
     * @param id
-    *   уникальный идентификатор автора (строка UUID).
+    *   уникальный идентификатор автора
     */
-  override def delete(id: String): Task[Unit] =
-    for {
-      uuid <- ZIO.fromTry(Try(UUID.fromString(id)))
-      result <- transaction {
-        for {
-          _ <- run {
+  override def delete(id: UUID): Task[Unit] =
+    transaction {
+      for {
+        _ <-
+          run {
             quote {
               query[BooksAuthors]
-                .filter(ba => ba.authorId == lift(uuid))
+                .filter(ba => ba.authorId == lift(id))
                 .delete
             }
           }
-          _ <- run {
+        _ <-
+          run {
             quote {
               query[Authors]
-                .filter(a => a.id == lift(uuid))
+                .filter(a => a.id == lift(id))
                 .delete
             }
           }
-        } yield ()
-      }.provide(dsLayer)
-    } yield result
+      } yield ()
+    }.provide(dsLayer)
   end delete
 
 end PgAuthorRepository

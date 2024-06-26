@@ -30,22 +30,13 @@ object PutComment:
     Comment,
     EndpointMiddleware.None
   ] =
-    Endpoint((RoutePattern.PUT / path) ?? Doc.p("Endpoint for updating comment"))
+    Endpoint((RoutePattern.PUT / path) ?? Doc.p("Updating comment"))
       .header(authHeader)
       .in[Comment](Doc.p("Comment"))
       .out[Comment](Doc.p("Updated comment"))
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
-      .outError[Unauthorized](
-        Status.Unauthorized,
-        Doc.p("Authorization error")
-      )
-      .outError[BadRequest](
-        Status.BadRequest,
-        Doc.p("Invalid comment")
-      )
+      .outError[InternalServerError](Status.InternalServerError)
+      .outError[Unauthorized](Status.Unauthorized)
+      .outError[BadRequest](Status.BadRequest)
 
   /** Маршрут API изменения комментария. */
   val route: Route[CommentRepository & SecurityConfig, Nothing] =
@@ -54,12 +45,14 @@ object PutComment:
         for {
           secret     <- Security.secret
           claim      <- validateJwt(token, secret).mapError(err => Right(Left(err)))
-          id         <- ZIO
-            .getOrFail(comment.id)
-            .orElseFail(Left(BadRequest("No comment ID")))
-          oldComment <- CommentService
-            .findById(id)
-            .orElseFail(Left(BadRequest("Comment does not exist")))
+          id         <-
+            ZIO
+              .getOrFail(comment.id)
+              .orElseFail(Left(BadRequest("No comment ID")))
+          oldComment <-
+            CommentService
+              .findById(id)
+              .orElseFail(Left(BadRequest("Comment does not exist")))
           result     <-
             if comment.userId == oldComment.userId && comment.bookId == oldComment.bookId
               && checkTokenPermissions(claim, comment.userId.toString)

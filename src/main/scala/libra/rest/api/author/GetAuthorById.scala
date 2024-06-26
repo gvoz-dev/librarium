@@ -11,39 +11,33 @@ import zio.http.codec.*
 import zio.http.codec.PathCodec.*
 import zio.http.endpoint.*
 
+import java.util.UUID
+
 /** API получения автора по идентификатору.
   *
   *   - GET /api/v1/authors/{id}
   */
 object GetAuthorById:
 
-  private val path = "api" / "v1" / "authors" / PathCodec.string("id")
+  private val path = "api" / "v1" / "authors" / PathCodec.uuid("id")
 
   /** Конечная точка API получения автора по идентификатору. */
   val endpoint: Endpoint[
-    String,
-    String,
+    UUID,
+    UUID,
     Either[InternalServerError, NotFound],
     Author,
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.GET / path) ?? Doc.p("Endpoint for querying author by ID")
-    )
+    Endpoint((RoutePattern.GET / path) ?? Doc.p("Querying author by ID"))
       .out[Author](Doc.p("Author"))
-      .outError[NotFound](
-        Status.NotFound,
-        Doc.p("Not found error")
-      )
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
+      .outError[NotFound](Status.NotFound)
+      .outError[InternalServerError](Status.InternalServerError)
 
   /** Маршрут API получения автора по идентификатору. */
   val route: Route[AuthorRepository, Nothing] =
     endpoint.implement(
-      handler((id: String) =>
+      handler((id: UUID) =>
         AuthorService
           .findById(id)
           .mapError {

@@ -18,8 +18,7 @@ import java.util.UUID
   */
 object GetRating:
 
-  private val path = "api" / "v1" / "rating"
-    / PathCodec.uuid("bookId") / PathCodec.uuid("userId")
+  private val path = "api" / "v1" / "rating" / PathCodec.uuid("bookId") / PathCodec.uuid("userId")
 
   /** Конечная точка API получения пользовательского рейтинга книги. */
   val endpoint: Endpoint[
@@ -29,19 +28,10 @@ object GetRating:
     Rating,
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.GET / path)
-        ?? Doc.p("Endpoint for querying rating")
-    )
+    Endpoint((RoutePattern.GET / path) ?? Doc.p("Querying book rating"))
       .out[Rating](Doc.p("Rating"))
-      .outError[NotFound](
-        Status.NotFound,
-        Doc.p("Not found error")
-      )
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
+      .outError[NotFound](Status.NotFound)
+      .outError[InternalServerError](Status.InternalServerError)
 
   /** Маршрут API получения пользовательского рейтинга книги. */
   val route: Route[UserBookRepository, Nothing] =

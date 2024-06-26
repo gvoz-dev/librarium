@@ -30,26 +30,13 @@ object PostPublisher:
     Publisher,
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.POST / path) ?? Doc.p("Endpoint for creating publisher")
-    )
+    Endpoint((RoutePattern.POST / path) ?? Doc.p("Creating publisher"))
       .header(authHeader)
       .in[Publisher](Doc.p("Publisher"))
-      .examplesIn(
-        (
-          "Example #1",
-          ("", Publisher(None, "МЦНМО", "Россия"))
-        )
-      )
-      .out[Publisher](Doc.p("Created publisher"))
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
-      .outError[Unauthorized](
-        Status.Unauthorized,
-        Doc.p("Authorization error")
-      )
+      .examplesIn(("Example #1", ("", Publisher(None, "МЦНМО", "Россия"))))
+      .out[Publisher](Status.Created, Doc.p("Created publisher"))
+      .outError[InternalServerError](Status.InternalServerError)
+      .outError[Unauthorized](Status.Unauthorized)
 
   /** Маршрут API добавления издателя. */
   val route: Route[PublisherRepository & SecurityConfig, Nothing] =

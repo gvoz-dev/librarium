@@ -28,9 +28,7 @@ object Registration:
     User,
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.POST / path) ?? Doc.p("Endpoint for user registration")
-    )
+    Endpoint((RoutePattern.POST / path) ?? Doc.p("User registration"))
       .in[User](Doc.p("User"))
       .examplesIn(
         (
@@ -38,22 +36,16 @@ object Registration:
           User(None, "Houdini", "houdini@example.com", "AllToScala")
         )
       )
-      .out[User](Doc.p("Registered user"))
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Registration failed")
-      )
-      .outError[BadRequest](
-        Status.BadRequest,
-        Doc.p("Invalid user data")
-      )
+      .out[User](Status.Created, Doc.p("Registered user"))
+      .outError[InternalServerError](Status.InternalServerError)
+      .outError[BadRequest](Status.BadRequest)
 
   /** Маршрут API регистрации. */
   val route: Route[UserRepository, Nothing] =
     endpoint.implement(
       handler((user: User) =>
         for {
-          hash <- Security.hashPassword(user.password)
+          hash   <- Security.hashPassword(user.password)
           result <- UserService
             .create(user.copy(password = hash))
             .orElseFail(Right(InternalServerError("Registration failed")))

@@ -13,40 +13,34 @@ import zio.http.codec.*
 import zio.http.codec.PathCodec.*
 import zio.http.endpoint.*
 
+import java.util.UUID
+
 /** API удаления автора.
   *
   *   - DELETE /api/v1/authors/{id}
   */
 object DeleteAuthor:
 
-  private val path = "api" / "v1" / "authors" / PathCodec.string("id")
+  private val path = "api" / "v1" / "authors" / PathCodec.uuid("id")
 
   /** Конечная точка API удаления автора. */
   val endpoint: Endpoint[
-    String,
-    (String, String),
+    UUID,
+    (UUID, String),
     Either[Unauthorized, InternalServerError],
     Unit,
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.DELETE / path) ?? Doc.p("Endpoint for deleting author")
-    )
+    Endpoint((RoutePattern.DELETE / path) ?? Doc.p("Delete author"))
       .header(authHeader)
-      .out[Unit]
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
-      .outError[Unauthorized](
-        Status.Unauthorized,
-        Doc.p("Authorization error")
-      )
+      .out[Unit](Status.NoContent)
+      .outError[InternalServerError](Status.InternalServerError)
+      .outError[Unauthorized](Status.Unauthorized)
 
   /** Маршрут API удаления автора. */
   val route: Route[AuthorRepository & SecurityConfig, Nothing] =
     endpoint.implement(
-      handler((id: String, token: String) =>
+      handler((id: UUID, token: String) =>
         for {
           secret <- Security.secret
           result <- JsonWebToken.validateJwt(token, secret).mapError(Left(_))

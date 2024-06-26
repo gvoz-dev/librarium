@@ -5,6 +5,8 @@ import libra.repositories.user.UserRepository
 import libra.utils.ServiceError.*
 import zio.ZIO
 
+import java.util.UUID
+
 /** Сервис пользователей. */
 object UserService:
 
@@ -22,10 +24,10 @@ object UserService:
   /** Найти пользователя по ID.
     *
     * @param id
-    *   уникальный идентификатор пользователя (строка UUID).
+    *   уникальный идентификатор пользователя
     */
   def findById(
-      id: String
+      id: UUID
   ): ZIO[UserRepository, RepositoryError, User] =
     ZIO
       .serviceWithZIO[UserRepository](_.findById(id))
@@ -49,7 +51,7 @@ object UserService:
       .mapError(e => InternalServerError(e.getMessage))
       .onError(e => ZIO.logError(s"Error:\n${e.prettyPrint}"))
       .flatMap {
-        case None => ZIO.fail(NotFound(s"User not found by email: $email"))
+        case None       => ZIO.fail(NotFound(s"User not found by email: $email"))
         case Some(user) => ZIO.succeed(user)
       }
 
@@ -83,7 +85,7 @@ object UserService:
         .serviceWithZIO[UserRepository](_.create(user))
         .mapError(e => InternalServerError(e.getMessage))
         .onError(e => ZIO.logError(s"$user not created:\n${e.prettyPrint}"))
-      _ <- ZIO.logInfo(s"$result created")
+      _      <- ZIO.logInfo(s"$result created")
     } yield result
 
   /** Изменить пользователя.
@@ -99,25 +101,23 @@ object UserService:
         .serviceWithZIO[UserRepository](_.update(user))
         .mapError(e => InternalServerError(e.getMessage))
         .onError(e => ZIO.logError(s"$user not updated:\n${e.prettyPrint}"))
-      _ <- ZIO.logInfo(s"$result updated")
+      _      <- ZIO.logInfo(s"$result updated")
     } yield result
 
   /** Удалить пользователя.
     *
     * @param id
-    *   уникальный идентификатор пользователя (строка UUID).
+    *   уникальный идентификатор пользователя
     */
   def delete(
-      id: String
+      id: UUID
   ): ZIO[UserRepository, InternalServerError, Unit] =
     for {
       result <- ZIO
         .serviceWithZIO[UserRepository](_.delete(id))
         .mapError(e => InternalServerError(e.getMessage))
-        .onError(e =>
-          ZIO.logError(s"User ($id) not deleted:\n${e.prettyPrint}")
-        )
-      _ <- ZIO.logInfo(s"User ($id) deleted")
+        .onError(e => ZIO.logError(s"User ($id) not deleted:\n${e.prettyPrint}"))
+      _      <- ZIO.logInfo(s"User ($id) deleted")
     } yield result
 
 end UserService

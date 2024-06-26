@@ -1,13 +1,15 @@
 package libra.repositories.comment
 
 import libra.entities.Comment
-import libra.repositories.userbook.UserBookRepository
 import zio.*
 
 import java.util.UUID
 
 /** Репозиторий пользовательских комментариев к книгам. */
 trait CommentRepository:
+
+  /** Получить все комментарии. */
+  def all: Task[List[Comment]]
 
   /** Найти комментарий по ID.
     *

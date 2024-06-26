@@ -32,9 +32,7 @@ object PutAuthor:
     Author,
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.PUT / path) ?? Doc.p("Endpoint for updating author")
-    )
+    Endpoint((RoutePattern.PUT / path) ?? Doc.p("Updating author"))
       .header(authHeader)
       .in[Author](Doc.p("Author"))
       .examplesIn(
@@ -51,14 +49,8 @@ object PutAuthor:
         )
       )
       .out[Author](Doc.p("Updated author"))
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
-      .outError[Unauthorized](
-        Status.Unauthorized,
-        Doc.p("Authorization error")
-      )
+      .outError[InternalServerError](Status.InternalServerError)
+      .outError[Unauthorized](Status.Unauthorized)
 
   /** Маршрут API изменения автора. */
   val route: Route[AuthorRepository & SecurityConfig, Nothing] =

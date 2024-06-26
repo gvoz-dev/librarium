@@ -13,46 +13,40 @@ import zio.http.codec.*
 import zio.http.codec.PathCodec.*
 import zio.http.endpoint.*
 
+import java.util.UUID
+
 /** API удаления пользователя.
   *
   *   - DELETE /api/v1/users/{id}
   */
 object DeleteUser:
 
-  private val path = "api" / "v1" / "users" / PathCodec.string("userId")
+  private val path = "api" / "v1" / "users" / PathCodec.uuid("userId")
 
   /** Конечная точка API удаления пользователя. */
   val endpoint: Endpoint[
-    String,
-    (String, String),
+    UUID,
+    (UUID, String),
     Either[Unauthorized, InternalServerError],
     Unit,
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.DELETE / path) ?? Doc.p("Endpoint for deleting user")
-    )
+    Endpoint((RoutePattern.DELETE / path) ?? Doc.p("Deleting user"))
       .header(authHeader)
-      .out[Unit]
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
-      .outError[Unauthorized](
-        Status.Unauthorized,
-        Doc.p("Authorization error")
-      )
+      .out[Unit](Status.NoContent)
+      .outError[InternalServerError](Status.InternalServerError)
+      .outError[Unauthorized](Status.Unauthorized)
 
   /** Маршрут API удаления пользователя. */
   val route: Route[UserRepository & SecurityConfig, Nothing] =
     endpoint.implement(
-      handler((userId: String, token: String) =>
+      handler((userId: UUID, token: String) =>
         for {
           secret <- Security.secret
-          claim <- JsonWebToken.validateJwt(token, secret).mapError(Left(_))
-          _ <-
-            if JsonWebToken.checkTokenPermissions(claim, userId) then
-              UserService.delete(userId).mapError(Right(_))
+          claim  <- JsonWebToken.validateJwt(token, secret).mapError(Left(_))
+          _      <-
+            if JsonWebToken.checkTokenPermissions(claim, userId.toString)
+            then UserService.delete(userId).mapError(Right(_))
             else ZIO.fail(Left(Unauthorized("No permission")))
         } yield ()
       )

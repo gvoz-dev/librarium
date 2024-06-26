@@ -20,8 +20,7 @@ import java.util.UUID
   */
 object PostLibraryAdd:
 
-  private val path = "api" / "v1" / "library"
-    / PathCodec.uuid("userId") / "add" / PathCodec.uuid("bookId")
+  private val path = "api" / "v1" / "library" / PathCodec.uuid("userId") / "add" / PathCodec.uuid("bookId")
 
   /** Конечная точка API добавления книги в библиотеку. */
   val endpoint: Endpoint[
@@ -31,20 +30,11 @@ object PostLibraryAdd:
     Unit,
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.POST / path)
-        ?? Doc.p("Endpoint for adding book to library")
-    )
+    Endpoint((RoutePattern.POST / path) ?? Doc.p("Adding book to library"))
       .header(authHeader)
       .out[Unit]
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
-      .outError[Unauthorized](
-        Status.Unauthorized,
-        Doc.p("Authorization error")
-      )
+      .outError[InternalServerError](Status.InternalServerError)
+      .outError[Unauthorized](Status.Unauthorized)
 
   /** Маршрут API добавления книги в библиотеку. */
   val route: Route[UserBookRepository & SecurityConfig, Nothing] =
@@ -52,8 +42,8 @@ object PostLibraryAdd:
       handler((userId: UUID, bookId: UUID, token: String) =>
         for {
           secret <- Security.secret
-          claim <- JsonWebToken.validateJwt(token, secret).mapError(Left(_))
-          _ <-
+          claim  <- JsonWebToken.validateJwt(token, secret).mapError(Left(_))
+          _      <-
             if JsonWebToken.checkTokenPermissions(claim, userId.toString) then
               UserBookService.addToLibrary(userId, bookId).mapError(Right(_))
             else ZIO.fail(Left(Unauthorized("No permission")))

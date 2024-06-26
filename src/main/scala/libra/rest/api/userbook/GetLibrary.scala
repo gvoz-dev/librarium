@@ -27,19 +27,10 @@ object GetLibrary:
     List[UUID],
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.GET / path)
-        ?? Doc.p("Endpoint for querying books from library")
-    )
+    Endpoint((RoutePattern.GET / path) ?? Doc.p("Querying books from library"))
       .out[List[UUID]](Doc.p("Books from library"))
-      .outError[NotFound](
-        Status.NotFound,
-        Doc.p("Not found error")
-      )
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
+      .outError[NotFound](Status.NotFound)
+      .outError[InternalServerError](Status.InternalServerError)
 
   /** Маршрут API получения библиотеки пользователя. */
   val route: Route[UserBookRepository, Nothing] =

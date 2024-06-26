@@ -31,10 +31,7 @@ object PostProgress:
     Unit,
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.POST / path)
-        ?? Doc.p("Endpoint for setting reading progress")
-    )
+    Endpoint((RoutePattern.POST / path) ?? Doc.p("Setting reading progress"))
       .header(authHeader)
       .in[Progress](Doc.p("Progress"))
       .examplesIn(
@@ -49,14 +46,8 @@ object PostProgress:
         )
       )
       .out[Unit]
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
-      .outError[Unauthorized](
-        Status.Unauthorized,
-        Doc.p("Authorization error")
-      )
+      .outError[InternalServerError](Status.InternalServerError)
+      .outError[Unauthorized](Status.Unauthorized)
 
   /** Маршрут API установки прогресса прочитанного. */
   val route: Route[UserBookRepository & SecurityConfig, Nothing] =
@@ -64,8 +55,8 @@ object PostProgress:
       handler((bookId: UUID, userId: UUID, token: String, progress: Progress) =>
         for {
           secret <- Security.secret
-          claim <- JsonWebToken.validateJwt(token, secret).mapError(Left(_))
-          _ <-
+          claim  <- JsonWebToken.validateJwt(token, secret).mapError(Left(_))
+          _      <-
             if JsonWebToken.checkTokenPermissions(claim, userId.toString) then
               UserBookService
                 .setProgress(userId, bookId, progress.value)

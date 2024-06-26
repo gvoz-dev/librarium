@@ -18,8 +18,7 @@ import java.util.UUID
   */
 object GetProgress:
 
-  private val path = "api" / "v1" / "progress"
-    / PathCodec.uuid("bookId") / PathCodec.uuid("userId")
+  private val path = "api" / "v1" / "progress" / PathCodec.uuid("bookId") / PathCodec.uuid("userId")
 
   /** Конечная точка API получения прогресса прочитанного. */
   val endpoint: Endpoint[
@@ -29,19 +28,10 @@ object GetProgress:
     Progress,
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.GET / path)
-        ?? Doc.p("Endpoint for querying reading progress")
-    )
+    Endpoint((RoutePattern.GET / path) ?? Doc.p("Querying reading progress"))
       .out[Progress](Doc.p("Progress"))
-      .outError[NotFound](
-        Status.NotFound,
-        Doc.p("Not found error")
-      )
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
+      .outError[NotFound](Status.NotFound)
+      .outError[InternalServerError](Status.InternalServerError)
 
   /** Маршрут API получения прогресса прочитанного. */
   val route: Route[UserBookRepository, Nothing] =

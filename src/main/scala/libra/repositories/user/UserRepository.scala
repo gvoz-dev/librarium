@@ -3,6 +3,8 @@ package libra.repositories.user
 import libra.entities.User
 import zio.*
 
+import java.util.UUID
+
 /** Репозиторий пользователей. */
 trait UserRepository:
 
@@ -12,9 +14,9 @@ trait UserRepository:
   /** Найти пользователя по ID.
     *
     * @param id
-    *   уникальный идентификатор пользователя (строка UUID).
+    *   уникальный идентификатор пользователя
     */
-  def findById(id: String): Task[Option[User]]
+  def findById(id: UUID): Task[Option[User]]
 
   /** Найти пользователя по email.
     *
@@ -47,8 +49,8 @@ trait UserRepository:
   /** Удалить пользователя.
     *
     * @param id
-    *   уникальный идентификатор пользователя (строка UUID).
+    *   уникальный идентификатор пользователя
     */
-  def delete(id: String): Task[Unit]
+  def delete(id: UUID): Task[Unit]
 
 end UserRepository

@@ -3,6 +3,8 @@ package libra.repositories.book
 import libra.entities.Book
 import zio.*
 
+import java.util.UUID
+
 /** Репозиторий книг. */
 trait BookRepository:
 
@@ -12,9 +14,9 @@ trait BookRepository:
   /** Найти книгу по ID.
     *
     * @param id
-    *   уникальный идентификатор книги (строка UUID).
+    *   уникальный идентификатор книги
     */
-  def findById(id: String): Task[Option[Book]]
+  def findById(id: UUID): Task[Option[Book]]
 
   /** Найти книги по названию.
     *
@@ -40,8 +42,8 @@ trait BookRepository:
   /** Удалить книгу.
     *
     * @param id
-    *   уникальный идентификатор книги (строка UUID).
+    *   уникальный идентификатор книги
     */
-  def delete(id: String): Task[Unit]
+  def delete(id: UUID): Task[Unit]
 
 end BookRepository

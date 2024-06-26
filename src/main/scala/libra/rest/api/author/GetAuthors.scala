@@ -28,24 +28,11 @@ object GetAuthors:
     List[Author],
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.GET / path) ?? Doc.p("Endpoint for querying authors")
-    )
-      .query(
-        QueryCodec
-          .query("name")
-          .optional
-          ?? Doc.p("Query parameter to search authors by name")
-      )
+    Endpoint((RoutePattern.GET / path) ?? Doc.p("Querying authors"))
+      .query(QueryCodec.query("name").optional ?? Doc.p("Query parameter to search authors by name"))
       .out[List[Author]](Doc.p("List of authors"))
-      .outError[NotFound](
-        Status.NotFound,
-        Doc.p("Not found error")
-      )
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
+      .outError[NotFound](Status.NotFound)
+      .outError[InternalServerError](Status.InternalServerError)
 
   /** Маршрут API получения авторов. */
   val route: Route[AuthorRepository, Nothing] =

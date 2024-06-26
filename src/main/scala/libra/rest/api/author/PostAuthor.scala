@@ -30,26 +30,13 @@ object PostAuthor:
     Author,
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.POST / path) ?? Doc.p("Endpoint for creating author")
-    )
+    Endpoint((RoutePattern.POST / path) ?? Doc.p("Creating author"))
       .header(authHeader)
       .in[Author](Doc.p("Author"))
-      .examplesIn(
-        (
-          "Example #1",
-          ("", Author(None, "Harold Abelson", Some("USA")))
-        )
-      )
-      .out[Author](Doc.p("Created author"))
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
-      .outError[Unauthorized](
-        Status.Unauthorized,
-        Doc.p("Authorization error")
-      )
+      .examplesIn(("Example #1", ("", Author(None, "Harold Abelson", Some("USA")))))
+      .out[Author](Status.Created, Doc.p("Created author"))
+      .outError[InternalServerError](Status.InternalServerError)
+      .outError[Unauthorized](Status.Unauthorized)
 
   /** Маршрут API добавления автора. */
   val route: Route[AuthorRepository & SecurityConfig, Nothing] =

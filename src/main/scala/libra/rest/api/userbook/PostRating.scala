@@ -31,10 +31,7 @@ object PostRating:
     Unit,
     EndpointMiddleware.None
   ] =
-    Endpoint(
-      (RoutePattern.POST / path)
-        ?? Doc.p("Endpoint for setting rating")
-    )
+    Endpoint((RoutePattern.POST / path) ?? Doc.p("Setting book rating"))
       .header(authHeader)
       .in[Rating](Doc.p("Rating"))
       .examplesIn(
@@ -49,14 +46,8 @@ object PostRating:
         )
       )
       .out[Unit]
-      .outError[InternalServerError](
-        Status.InternalServerError,
-        Doc.p("Service error")
-      )
-      .outError[Unauthorized](
-        Status.Unauthorized,
-        Doc.p("Authorization error")
-      )
+      .outError[InternalServerError](Status.InternalServerError)
+      .outError[Unauthorized](Status.Unauthorized)
 
   /** Маршрут API установки пользовательского рейтинга. */
   val route: Route[UserBookRepository & SecurityConfig, Nothing] =
@@ -64,8 +55,8 @@ object PostRating:
       handler((bookId: UUID, userId: UUID, token: String, rating: Rating) =>
         for {
           secret <- Security.secret
-          claim <- JsonWebToken.validateJwt(token, secret).mapError(Left(_))
-          _ <-
+          claim  <- JsonWebToken.validateJwt(token, secret).mapError(Left(_))
+          _      <-
             if JsonWebToken.checkTokenPermissions(claim, userId.toString) then
               UserBookService
                 .setRating(userId, bookId, rating.value)
