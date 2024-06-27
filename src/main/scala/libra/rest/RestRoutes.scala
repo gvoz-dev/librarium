@@ -24,7 +24,7 @@ import zio.http.endpoint.openapi.*
 /** Маршруты REST. */
 object RestRoutes:
 
-  /** Коллекция конечных точек. */
+  /** Коллекция декларативных конечных точек. */
   private val endpoints =
     List(
       Login.endpoint,
@@ -118,7 +118,7 @@ object RestRoutes:
       DeletePublisher.route
     )
 
-  /** Генерация OpenAPI из конечных точек. */
+  /** Генерация OpenAPI из декларативных конечных точек. */
   private val openAPI = OpenAPIGen.fromEndpoints(
     title = "Librarium API",
     version = "1.0",

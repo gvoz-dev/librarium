@@ -118,25 +118,26 @@ case class PgCommentRepository(ds: DataSource) extends CommentRepository:
     for {
       id     <- Random.nextUUID
       time   <- Clock.localDateTime
-      result <- run {
-        quote {
-          query[Comments]
-            .insertValue(
-              lift(
-                Comments(
-                  id,
-                  comment.userId,
-                  comment.bookId,
-                  comment.text,
-                  comment.isPrivate,
-                  time,
-                  None
+      result <-
+        run {
+          quote {
+            query[Comments]
+              .insertValue(
+                lift(
+                  Comments(
+                    id,
+                    comment.userId,
+                    comment.bookId,
+                    comment.text,
+                    comment.isPrivate,
+                    time,
+                    None
+                  )
                 )
               )
-            )
-            .returning(toComment)
-        }
-      }.provide(dsLayer)
+              .returning(toComment)
+          }
+        }.provide(dsLayer)
     } yield result
   end create
 
@@ -151,18 +152,19 @@ case class PgCommentRepository(ds: DataSource) extends CommentRepository:
     for {
       id               <- ZIO.getOrFail(comment.id)
       lastModifiedTime <- Clock.localDateTime.map(Option(_))
-      result           <- run {
-        quote {
-          query[Comments]
-            .filter(c => c.id == lift(id))
-            .update(
-              c => c.text -> lift(comment.text),
-              c => c.isPrivate -> lift(comment.isPrivate),
-              c => c.lastModifiedTime -> lift(lastModifiedTime)
-            )
-            .returning(toComment)
-        }
-      }.provide(dsLayer)
+      result           <-
+        run {
+          quote {
+            query[Comments]
+              .filter(c => c.id == lift(id))
+              .update(
+                c => c.text -> lift(comment.text),
+                c => c.isPrivate -> lift(comment.isPrivate),
+                c => c.lastModifiedTime -> lift(lastModifiedTime)
+              )
+              .returning(toComment)
+          }
+        }.provide(dsLayer)
     } yield result
   end update
 

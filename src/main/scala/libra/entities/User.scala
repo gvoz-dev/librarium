@@ -27,10 +27,10 @@ final case class User(
     @validate(Validation.minLength(1))
     name: String,
     @description("User email")
-    @validate(Validation.email) // Нечитаемое сообщение об ошибке
+    @validate(Validation.email) // TODO: Нечитаемое сообщение об ошибке
     email: String,
     @description("User password")
-    // @transientField // TODO: В генерируемом SwaggerUI ломается пример
+    // @transientField // TODO: В генерируемом Swagger UI ломается пример
     @validate(Validation.minLength(1))
     password: String,
     @description("User role")

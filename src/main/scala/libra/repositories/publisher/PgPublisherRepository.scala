@@ -7,7 +7,6 @@ import zio.*
 
 import java.util.UUID
 import javax.sql.DataSource
-import scala.util.Try
 
 /** Реализация репозитория издателей для СУБД PostgreSQL.
   *

@@ -42,8 +42,8 @@ object PostComment:
             "",
             Comment(
               None,
-              UUID.fromString("b43e5b87-a042-461b-8728-653eddced002"),
               UUID.fromString("ea962bb3-8f66-4256-bea5-8851c8f37dfb"),
+              UUID.fromString("b43e5b87-a042-461b-8728-653eddced002"),
               "Cool book!",
               false,
               None,
